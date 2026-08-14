@@ -97,7 +97,7 @@ This is regression/safety-behavior evidence, not a plant safety case. See [`arti
 Requirements: Docker Engine/Desktop with Compose v2.
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+git clone https://github.com/alaster-t34/ForgeGuard-Nexus.git
 cd ForgeGuard-Nexus
 docker compose -f compose.yaml up -d --build api
 ```
