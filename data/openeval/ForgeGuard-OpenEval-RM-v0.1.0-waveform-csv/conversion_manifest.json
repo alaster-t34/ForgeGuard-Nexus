@@ -1,0 +1,34 @@
+{
+  "dataset": "ForgeGuard OpenEval-RM",
+  "dataset_version": "0.1.0",
+  "generated_at_utc": "2026-08-05T13:55:28.384350+00:00",
+  "source_npz": "../forgeguard_openeval_rm_v0_1.npz",
+  "source_npz_sha256": "768b1f7c4cee7082e7a415e23252f82b5f1ebef100cce96a954acf849835845d",
+  "sample_count": 448,
+  "sample_rate_hz": 12000.0,
+  "signal_length": 2048,
+  "duration_seconds": 0.17066666666666666,
+  "last_timestamp_seconds": 0.17058333333333334,
+  "csv_columns": [
+    "timestamp",
+    "acceleration_x"
+  ],
+  "split_counts": {
+    "test": 96,
+    "train": 288,
+    "validation": 64
+  },
+  "label_counts": {
+    "ball": 56,
+    "imbalance": 56,
+    "inner_race": 56,
+    "looseness": 56,
+    "lubrication": 56,
+    "misalignment": 56,
+    "normal": 56,
+    "outer_race": 56
+  },
+  "index_file": "waveform_index.csv",
+  "waveform_file_count": 448,
+  "scientific_boundary": "Physics-informed synthetic data for software regression and benchmark demonstrations; not experimental plant data and not evidence of real-factory accuracy."
+}

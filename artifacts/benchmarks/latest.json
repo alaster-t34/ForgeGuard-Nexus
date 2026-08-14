@@ -1,0 +1,424 @@
+{
+  "id": "BMR-20260723T124116Z",
+  "created_at": "2026-07-23T12:41:17.473117Z",
+  "dataset_name": "ForgeGuard OpenEval-RM",
+  "dataset_version": "0.1.0",
+  "train_samples": 288,
+  "validation_samples": 64,
+  "test_samples": 96,
+  "labels": [
+    "normal",
+    "imbalance",
+    "misalignment",
+    "outer_race",
+    "inner_race",
+    "ball",
+    "lubrication",
+    "looseness"
+  ],
+  "split_policy": "Machine-group split: simulated machine IDs 00-08 train, 09-10 validation, 11-13 test. No window from a machine appears in multiple splits.",
+  "seed": 42,
+  "environment": {
+    "python": "3.13.5",
+    "platform": "Linux-6.12.13-x86_64-with-glibc2.41",
+    "numpy": "2.3.5",
+    "scikit_learn": "1.8.0",
+    "torch": "2.10.0+cpu"
+  },
+  "models": [
+    {
+      "model_id": "dsp-calibrated-rf-v0.2",
+      "family": "DSP + validation-calibrated random forest",
+      "train_seconds": 0.5007525429998623,
+      "latency_p50_ms": 35.32261600003039,
+      "latency_p95_ms": 47.31808514982275,
+      "accuracy": 0.9583333333333334,
+      "macro_f1": 0.9590301003344481,
+      "balanced_accuracy": 0.9583333333333333,
+      "log_loss": 0.2863844949448048,
+      "brier_score": 0.1112900127456971,
+      "expected_calibration_error": 0.16856282926255495,
+      "abstention_rate": 0.13541666666666663,
+      "accepted_accuracy": 0.963855421686747,
+      "model_size_bytes": 1029844,
+      "robustness": [
+        {
+          "slice_name": "low_snr",
+          "accuracy": 0.59375,
+          "macro_f1": 0.4905545112781955,
+          "balanced_accuracy": 0.59375,
+          "mean_confidence": 0.6481036683370366,
+          "abstention_rate": 0.36458333333333337,
+          "accepted_accuracy": 0.819672131147541
+        },
+        {
+          "slice_name": "speed_shift",
+          "accuracy": 0.90625,
+          "macro_f1": 0.9044871794871795,
+          "balanced_accuracy": 0.90625,
+          "mean_confidence": 0.7604711150573108,
+          "abstention_rate": 0.25,
+          "accepted_accuracy": 0.9583333333333334
+        },
+        {
+          "slice_name": "dropout",
+          "accuracy": 0.8020833333333334,
+          "macro_f1": 0.7889722971959814,
+          "balanced_accuracy": 0.8020833333333333,
+          "mean_confidence": 0.7727126897173967,
+          "abstention_rate": 0.13541666666666663,
+          "accepted_accuracy": 0.8313253012048193
+        },
+        {
+          "slice_name": "clipping",
+          "accuracy": 0.7291666666666666,
+          "macro_f1": 0.6928071928071928,
+          "balanced_accuracy": 0.7291666666666667,
+          "mean_confidence": 0.6556685347969038,
+          "abstention_rate": 0.375,
+          "accepted_accuracy": 0.8666666666666667
+        },
+        {
+          "slice_name": "drift",
+          "accuracy": 0.78125,
+          "macro_f1": 0.7408008658008658,
+          "balanced_accuracy": 0.78125,
+          "mean_confidence": 0.7867806475056555,
+          "abstention_rate": 0.09375,
+          "accepted_accuracy": 0.8160919540229885
+        },
+        {
+          "slice_name": "impulse_interference",
+          "accuracy": 0.4479166666666667,
+          "macro_f1": 0.3535465188690995,
+          "balanced_accuracy": 0.4479166666666667,
+          "mean_confidence": 0.5806436907145988,
+          "abstention_rate": 0.5625,
+          "accepted_accuracy": 0.47619047619047616
+        }
+      ],
+      "notes": [
+        "Machine-group test split prevents windows from the same simulated machine crossing splits.",
+        "Robustness slices are applied only after the held-out split is fixed."
+      ]
+    },
+    {
+      "model_id": "dsp-calibrated-et-v0.2",
+      "family": "DSP + validation-calibrated extra trees",
+      "train_seconds": 0.353566808000096,
+      "latency_p50_ms": 34.827175500140584,
+      "latency_p95_ms": 47.586604599814564,
+      "accuracy": 0.9166666666666666,
+      "macro_f1": 0.9168060200668897,
+      "balanced_accuracy": 0.9166666666666667,
+      "log_loss": 0.2905569001519715,
+      "brier_score": 0.1202441793567286,
+      "expected_calibration_error": 0.11686543726816861,
+      "abstention_rate": 0.125,
+      "accepted_accuracy": 0.9523809523809523,
+      "model_size_bytes": 2269316,
+      "robustness": [
+        {
+          "slice_name": "low_snr",
+          "accuracy": 0.6145833333333334,
+          "macro_f1": 0.5267160017160017,
+          "balanced_accuracy": 0.6145833333333334,
+          "mean_confidence": 0.6888762344633075,
+          "abstention_rate": 0.40625,
+          "accepted_accuracy": 0.7543859649122807
+        },
+        {
+          "slice_name": "speed_shift",
+          "accuracy": 0.90625,
+          "macro_f1": 0.9042233933538282,
+          "balanced_accuracy": 0.90625,
+          "mean_confidence": 0.7626519539925173,
+          "abstention_rate": 0.17708333333333337,
+          "accepted_accuracy": 0.9493670886075949
+        },
+        {
+          "slice_name": "dropout",
+          "accuracy": 0.7916666666666666,
+          "macro_f1": 0.7736313881050723,
+          "balanced_accuracy": 0.7916666666666666,
+          "mean_confidence": 0.7489417117932424,
+          "abstention_rate": 0.19791666666666663,
+          "accepted_accuracy": 0.8961038961038961
+        },
+        {
+          "slice_name": "clipping",
+          "accuracy": 0.8125,
+          "macro_f1": 0.7685676392572944,
+          "balanced_accuracy": 0.8125,
+          "mean_confidence": 0.7123673051768614,
+          "abstention_rate": 0.3125,
+          "accepted_accuracy": 0.9696969696969697
+        },
+        {
+          "slice_name": "drift",
+          "accuracy": 0.7708333333333334,
+          "macro_f1": 0.7469165710399932,
+          "balanced_accuracy": 0.7708333333333334,
+          "mean_confidence": 0.7731541207705899,
+          "abstention_rate": 0.20833333333333337,
+          "accepted_accuracy": 0.8947368421052632
+        },
+        {
+          "slice_name": "impulse_interference",
+          "accuracy": 0.3645833333333333,
+          "macro_f1": 0.2898977604673807,
+          "balanced_accuracy": 0.3645833333333333,
+          "mean_confidence": 0.5732596143616582,
+          "abstention_rate": 0.5208333333333333,
+          "accepted_accuracy": 0.5
+        }
+      ],
+      "notes": [
+        "Machine-group test split prevents windows from the same simulated machine crossing splits.",
+        "Robustness slices are applied only after the held-out split is fixed."
+      ]
+    },
+    {
+      "model_id": "dsp-calibrated-hgb-v0.2",
+      "family": "DSP + validation-calibrated histogram gradient boosting",
+      "train_seconds": 0.4963319539999702,
+      "latency_p50_ms": 9.903107500008446,
+      "latency_p95_ms": 13.91160515006504,
+      "accuracy": 0.9375,
+      "macro_f1": 0.9342261904761905,
+      "balanced_accuracy": 0.9375,
+      "log_loss": 0.32200552960107565,
+      "brier_score": 0.13254377319275246,
+      "expected_calibration_error": 0.15898287527182947,
+      "abstention_rate": 0.1875,
+      "accepted_accuracy": 0.9871794871794872,
+      "model_size_bytes": 903188,
+      "robustness": [
+        {
+          "slice_name": "low_snr",
+          "accuracy": 0.7395833333333334,
+          "macro_f1": 0.6908305364187717,
+          "balanced_accuracy": 0.7395833333333333,
+          "mean_confidence": 0.6036714706583705,
+          "abstention_rate": 0.39583333333333337,
+          "accepted_accuracy": 0.9137931034482759
+        },
+        {
+          "slice_name": "speed_shift",
+          "accuracy": 0.8333333333333334,
+          "macro_f1": 0.8335490542896242,
+          "balanced_accuracy": 0.8333333333333334,
+          "mean_confidence": 0.7130701557070639,
+          "abstention_rate": 0.28125,
+          "accepted_accuracy": 0.927536231884058
+        },
+        {
+          "slice_name": "dropout",
+          "accuracy": 0.90625,
+          "macro_f1": 0.9049700149925037,
+          "balanced_accuracy": 0.90625,
+          "mean_confidence": 0.7349552638534234,
+          "abstention_rate": 0.19791666666666663,
+          "accepted_accuracy": 0.961038961038961
+        },
+        {
+          "slice_name": "clipping",
+          "accuracy": 0.7291666666666666,
+          "macro_f1": 0.6641642353945777,
+          "balanced_accuracy": 0.7291666666666666,
+          "mean_confidence": 0.6822810067820724,
+          "abstention_rate": 0.35416666666666663,
+          "accepted_accuracy": 0.7580645161290323
+        },
+        {
+          "slice_name": "drift",
+          "accuracy": 0.90625,
+          "macro_f1": 0.9050925925925926,
+          "balanced_accuracy": 0.90625,
+          "mean_confidence": 0.7379049684790604,
+          "abstention_rate": 0.23958333333333337,
+          "accepted_accuracy": 0.9863013698630136
+        },
+        {
+          "slice_name": "impulse_interference",
+          "accuracy": 0.40625,
+          "macro_f1": 0.3011128364389234,
+          "balanced_accuracy": 0.40625,
+          "mean_confidence": 0.5658927663425098,
+          "abstention_rate": 0.6875,
+          "accepted_accuracy": 0.43333333333333335
+        }
+      ],
+      "notes": [
+        "Machine-group test split prevents windows from the same simulated machine crossing splits.",
+        "Robustness slices are applied only after the held-out split is fixed."
+      ]
+    },
+    {
+      "model_id": "dsp-calibrated-logreg-v0.2",
+      "family": "DSP + validation-calibrated multinomial logistic regression",
+      "train_seconds": 0.0162793199999669,
+      "latency_p50_ms": 0.5505824999545439,
+      "latency_p95_ms": 0.8625490001350045,
+      "accuracy": 0.9583333333333334,
+      "macro_f1": 0.9590301003344481,
+      "balanced_accuracy": 0.9583333333333333,
+      "log_loss": 0.4341531195754234,
+      "brier_score": 0.1956312961237184,
+      "expected_calibration_error": 0.28618476517908215,
+      "abstention_rate": 0.34375,
+      "accepted_accuracy": 1.0,
+      "model_size_bytes": 4804,
+      "robustness": [
+        {
+          "slice_name": "low_snr",
+          "accuracy": 0.10416666666666667,
+          "macro_f1": 0.04171301446051168,
+          "balanced_accuracy": 0.10416666666666667,
+          "mean_confidence": 0.26388888888777773,
+          "abstention_rate": 1.0,
+          "accepted_accuracy": null
+        },
+        {
+          "slice_name": "speed_shift",
+          "accuracy": 0.13541666666666666,
+          "macro_f1": 0.05492898913951545,
+          "balanced_accuracy": 0.13541666666666666,
+          "mean_confidence": 0.27083333333216664,
+          "abstention_rate": 1.0,
+          "accepted_accuracy": null
+        },
+        {
+          "slice_name": "dropout",
+          "accuracy": 0.16666666666666666,
+          "macro_f1": 0.0664983164983165,
+          "balanced_accuracy": 0.16666666666666669,
+          "mean_confidence": 0.2749999999988,
+          "abstention_rate": 1.0,
+          "accepted_accuracy": null
+        },
+        {
+          "slice_name": "clipping",
+          "accuracy": 0.09375,
+          "macro_f1": 0.041666666666666664,
+          "balanced_accuracy": 0.09375,
+          "mean_confidence": 0.2833333333320667,
+          "abstention_rate": 1.0,
+          "accepted_accuracy": null
+        },
+        {
+          "slice_name": "drift",
+          "accuracy": 0.125,
+          "macro_f1": 0.027777777777777776,
+          "balanced_accuracy": 0.125,
+          "mean_confidence": 0.1999999999994,
+          "abstention_rate": 1.0,
+          "accepted_accuracy": null
+        },
+        {
+          "slice_name": "impulse_interference",
+          "accuracy": 0.17708333333333334,
+          "macro_f1": 0.12049293611793611,
+          "balanced_accuracy": 0.17708333333333331,
+          "mean_confidence": 0.40798527088474373,
+          "abstention_rate": 0.78125,
+          "accepted_accuracy": 0.2857142857142857
+        }
+      ],
+      "notes": [
+        "Machine-group test split prevents windows from the same simulated machine crossing splits.",
+        "Robustness slices are applied only after the held-out split is fixed."
+      ]
+    },
+    {
+      "model_id": "dsp-calibrated-rbf-svm-v0.2",
+      "family": "DSP + validation-calibrated RBF SVM",
+      "train_seconds": 0.01664592400015863,
+      "latency_p50_ms": 0.9681574998694487,
+      "latency_p95_ms": 1.4318753000679858,
+      "accuracy": 0.9583333333333334,
+      "macro_f1": 0.9590301003344481,
+      "balanced_accuracy": 0.9583333333333333,
+      "log_loss": 0.45102148211464027,
+      "brier_score": 0.2061145329714981,
+      "expected_calibration_error": 0.29665319091056697,
+      "abstention_rate": 0.28125,
+      "accepted_accuracy": 1.0,
+      "model_size_bytes": 50948,
+      "robustness": [
+        {
+          "slice_name": "low_snr",
+          "accuracy": 0.125,
+          "macro_f1": 0.027777777777777776,
+          "balanced_accuracy": 0.125,
+          "mean_confidence": 0.6860066765272564,
+          "abstention_rate": 0.0,
+          "accepted_accuracy": 0.125
+        },
+        {
+          "slice_name": "speed_shift",
+          "accuracy": 0.125,
+          "macro_f1": 0.027777777777777776,
+          "balanced_accuracy": 0.125,
+          "mean_confidence": 0.6860066765272564,
+          "abstention_rate": 0.0,
+          "accepted_accuracy": 0.125
+        },
+        {
+          "slice_name": "dropout",
+          "accuracy": 0.125,
+          "macro_f1": 0.027777777777777776,
+          "balanced_accuracy": 0.125,
+          "mean_confidence": 0.6860066765272564,
+          "abstention_rate": 0.0,
+          "accepted_accuracy": 0.125
+        },
+        {
+          "slice_name": "clipping",
+          "accuracy": 0.125,
+          "macro_f1": 0.027777777777777776,
+          "balanced_accuracy": 0.125,
+          "mean_confidence": 0.6860066765272564,
+          "abstention_rate": 0.0,
+          "accepted_accuracy": 0.125
+        },
+        {
+          "slice_name": "drift",
+          "accuracy": 0.125,
+          "macro_f1": 0.027777777777777776,
+          "balanced_accuracy": 0.125,
+          "mean_confidence": 0.6860066765272564,
+          "abstention_rate": 0.0,
+          "accepted_accuracy": 0.125
+        },
+        {
+          "slice_name": "impulse_interference",
+          "accuracy": 0.1875,
+          "macro_f1": 0.11380886665516646,
+          "balanced_accuracy": 0.1875,
+          "mean_confidence": 0.6568741618478321,
+          "abstention_rate": 0.1875,
+          "accepted_accuracy": 0.21794871794871795
+        }
+      ],
+      "notes": [
+        "Machine-group test split prevents windows from the same simulated machine crossing splits.",
+        "Robustness slices are applied only after the held-out split is fixed."
+      ]
+    }
+  ],
+  "best_model_id": "dsp-calibrated-hgb-v0.2",
+  "selection_rule": "0.45 macro-F1 + 0.20 balanced accuracy + 0.20 mean robustness macro-F1 + 0.15 calibration term - latency penalty",
+  "artifact_paths": {
+    "dataset": "data/openeval/forgeguard_openeval_rm_v0_1.npz",
+    "manifest": "data/openeval/manifest.json",
+    "selected_model": "backend/research/artifacts/selected_vibration_model.portable.npz",
+    "selected_model_card": "backend/research/artifacts/selected_vibration_model.json",
+    "research_source_model": "backend/research/artifacts/selected_vibration_model.joblib"
+  },
+  "limitations": [
+    "OpenEval-RM is physics-informed synthetic data, not a substitute for plant measurements.",
+    "External public datasets are registered but not redistributed because their licenses and download workflows differ.",
+    "A championship submission still requires disclosed physical-rig results and cross-dataset validation."
+  ]
+}

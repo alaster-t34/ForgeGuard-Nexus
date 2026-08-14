@@ -1,0 +1,73 @@
+{
+  "created_at": "2026-07-23T12:59:41.597671+00:00",
+  "config": "/mnt/data/ForgeGuard-Nexus-work/ForgeGuard-Nexus/backend/research/anomalib_benchmark.yaml",
+  "dataset_root": "data/external/mvtec_ad",
+  "category": "transistor",
+  "commands": [
+    [
+      "/opt/pyvenv/bin/python",
+      "-m",
+      "anomalib.cli.cli",
+      "train",
+      "--model",
+      "Patchcore",
+      "--data",
+      "anomalib.data.MVTecAD",
+      "--data.root",
+      "data/external/mvtec_ad",
+      "--data.category",
+      "transistor",
+      "--seed_everything",
+      "42"
+    ],
+    [
+      "/opt/pyvenv/bin/python",
+      "-m",
+      "anomalib.cli.cli",
+      "train",
+      "--model",
+      "EfficientAd",
+      "--data",
+      "anomalib.data.MVTecAD",
+      "--data.root",
+      "data/external/mvtec_ad",
+      "--data.category",
+      "transistor",
+      "--seed_everything",
+      "42"
+    ],
+    [
+      "/opt/pyvenv/bin/python",
+      "-m",
+      "anomalib.cli.cli",
+      "train",
+      "--model",
+      "Dinomaly",
+      "--data",
+      "anomalib.data.MVTecAD",
+      "--data.root",
+      "data/external/mvtec_ad",
+      "--data.category",
+      "transistor",
+      "--seed_everything",
+      "42"
+    ],
+    [
+      "/opt/pyvenv/bin/python",
+      "-m",
+      "anomalib.cli.cli",
+      "train",
+      "--model",
+      "AnomalyDino",
+      "--data",
+      "anomalib.data.MVTecAD",
+      "--data.root",
+      "data/external/mvtec_ad",
+      "--data.category",
+      "transistor",
+      "--seed_everything",
+      "42"
+    ]
+  ],
+  "dry_run": true
+}

@@ -1,0 +1,63 @@
+{
+  "campaign_id": "DEMO-RIG-CSV-001",
+  "node_id": "JETSON-AGX-ORIN-001",
+  "asset_id": "FG-BRG-001",
+  "title": "Non-physical CSV transport demonstration",
+  "operator_id": "demo-operator",
+  "specimen": {
+    "specimen_id": "SIMULATED-SPECIMEN",
+    "condition": "unknown",
+    "declared_fault_label": null,
+    "provenance": "ForgeGuard bundled demonstration CSV; not physical evidence",
+    "fault_creation_method": null,
+    "post_test_inspection": null,
+    "photo_uris": []
+  },
+  "sensor": {
+    "manufacturer": "ForgeGuard",
+    "model": "CSV replay adapter",
+    "serial_number": null,
+    "sensitivity": null,
+    "sensitivity_unit": null,
+    "measurement_range": null,
+    "bandwidth_hz": null,
+    "axis": "radial",
+    "position": "simulated drive-end position",
+    "mounting": "not applicable to CSV demo",
+    "calibration": {
+      "performed_at": null,
+      "method": "demonstration-only",
+      "reference": "simulator/sample_vibration.csv",
+      "sensitivity": null,
+      "unit": "g",
+      "certificate_uri": null
+    }
+  },
+  "daq": {
+    "manufacturer": "ForgeGuard",
+    "model": "CSV replay",
+    "serial_number": null,
+    "bit_depth": 24,
+    "input_range": "demonstration-only",
+    "coupling": "not applicable",
+    "anti_alias_filter": "not applicable",
+    "clock_source": "file metadata"
+  },
+  "safety": {
+    "guard_installed": true,
+    "emergency_stop_verified": true,
+    "max_rpm": 2400,
+    "max_load_percent": 100,
+    "approved_by": "demo-safety-fixture"
+  },
+  "operating_points": [
+    {
+      "rpm": 1800,
+      "load_percent": 70,
+      "duration_seconds": 1,
+      "repetitions": 1
+    }
+  ],
+  "protocol_version": "forgeguard-rig-v0.2",
+  "notes": "This manifest validates the software path only and must never be cited as a physical rig run."
+}

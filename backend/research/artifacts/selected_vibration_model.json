@@ -1,0 +1,73 @@
+{
+  "model_id": "dsp-calibrated-hgb-v0.2",
+  "artifact": "backend/research/artifacts/selected_vibration_model.portable.npz",
+  "feature_names": [
+    "mean",
+    "std",
+    "rms",
+    "peak",
+    "peak_to_peak",
+    "skewness",
+    "kurtosis",
+    "crest_factor",
+    "shape_factor",
+    "impulse_factor",
+    "clearance_factor",
+    "zero_crossing_rate",
+    "derivative_rms",
+    "spectral_centroid_hz",
+    "spectral_spread_hz",
+    "spectral_entropy",
+    "dominant_frequency_hz",
+    "low_band_dominant_frequency_hz",
+    "envelope_kurtosis",
+    "envelope_spectral_centroid_hz",
+    "band_energy_0_120",
+    "band_energy_120_500",
+    "band_energy_500_1500",
+    "band_energy_1500_3000",
+    "band_energy_3000_nyquist",
+    "clipping_ratio",
+    "dropout_ratio"
+  ],
+  "label_names": [
+    "normal",
+    "imbalance",
+    "misalignment",
+    "outer_race",
+    "inner_race",
+    "ball",
+    "lubrication",
+    "looseness"
+  ],
+  "sample_rate_hz": 12000.0,
+  "signal_length": 2048,
+  "confidence_threshold": 0.62,
+  "dataset_sha256": "768b1f7c4cee7082e7a415e23252f82b5f1ebef100cce96a954acf849835845d",
+  "selection_score": 0.8638676311998005,
+  "runtime_requirements": {
+    "python": ">=3.11,<3.13 for native release",
+    "numpy": ">=1.26,<3",
+    "scikit_learn_inference": "not required by portable artifact",
+    "scikit_learn_training": "1.8.0",
+    "serialization": "NumPy NPZ primitive numeric arrays; allow_pickle=False",
+    "compatibility_policy": "Runtime loads the portable numeric artifact. The joblib file is retained only as a trusted research/training artifact and is not loaded by production startup."
+  },
+  "artifact_format": "forgeguard-portable-calibrated-hgb-v1",
+  "research_source_artifact": "backend/research/artifacts/selected_vibration_model.joblib",
+  "source_training_environment": {
+    "python": "3.13.5",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "scikit_learn": "1.8.0",
+    "joblib": "1.5.3"
+  },
+  "portable_model": {
+    "class": "PortableCalibratedHGB",
+    "features": 27,
+    "classes": 8,
+    "trees": 1440,
+    "nodes": 10038,
+    "source_joblib_sha256": "6e27d87b73f91c95113ca1531b71645dcae40ebecc5432e0dd1bfb4ae92127cd"
+  }
+}

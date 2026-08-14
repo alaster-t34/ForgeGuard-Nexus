@@ -1,0 +1,20 @@
+name: Bug report
+description: Report a reproducible platform, Agent, model or deployment defect
+body:
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: Windows, Arch, Debian/Ubuntu or Jetson; include version
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs and evidence

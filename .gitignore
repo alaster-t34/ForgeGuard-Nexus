@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+.venv-path.txt
+
+# Node / build
+node_modules/
+dist/
+build/
+
+# Secrets / local environment
+.env
+.env.*
+!.env.example
+!backend/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Runtime state
+runtime-data/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.pid
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# User-downloaded or plant-owned data must never be committed by default.
+data/external/
+data/raw/
+
+# Large generated CSV expansions of OpenEval-RM; compact NPZ + metadata stay tracked.
+data/openeval/ForgeGuard-OpenEval-RM-v0.1.0-waveform-csv/train_merged.csv
+data/openeval/ForgeGuard-OpenEval-RM-v0.1.0-waveform-csv/test_merged.csv
+
+# Raw rig evidence may contain proprietary operating data and large waveforms.
+artifacts/bench-evidence/
+
+# Local benchmark scratch and optional training logs.
+artifacts/visual-benchmarks/checkpoints/
+artifacts/visual-benchmarks/runs/
+
+# Release-only binaries/media; publish these as GitHub Release assets instead.
+*.exe
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# Archives created locally
+*.zip
+*.7z
+*.tar
+*.tar.gz

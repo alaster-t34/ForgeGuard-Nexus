@@ -1,0 +1,35 @@
+name: ForgeGuard CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: python -m pip install -r backend/requirements.lock.txt pytest pytest-asyncio
+      - run: python -m compileall -q backend/app edge-node/forgeguard_edge
+      - run: pytest -q
+        working-directory: backend
+        env:
+          PYTHONPATH: .
+          FORGEGUARD_DATABASE_URL: memory://
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --check frontend/app.js
+      - run: bash -n start.sh stop.sh deploy/linux/*.sh deploy/jetson-5/*.sh

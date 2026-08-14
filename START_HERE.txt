@@ -1,0 +1,42 @@
+ForgeGuard Nexus 5.0 / 0.7.9
+================================
+
+最先做的三件事：
+
+1. 启动软件
+   Windows：双击 ForgeGuard-Nexus.exe
+   Linux：bash start.sh
+   Jetson：bash deploy/jetson-5/run.sh
+
+2. 进入主要数据入口
+   - 数据检测与分析 / 实时检测：持续接收传感器、网关或演示数据
+   - 数据检测与分析 / CSV 文件分析：上传已有 CSV 并生成报告
+   - 工业场景库：运行 25 个演示场景，验证 Agent 决策闭环
+
+3. 完成工业闭环
+   告警事件 → 维修决策 → 人工审批 → 工单执行 → 维修后验证
+
+常用入口：
+- 右上角搜索：点击或按 Ctrl+K
+- 最近工业事件“全部”：进入完整告警事件页面
+- 右上角问号：查看术语和页面说明
+
+Windows 默认以无地址栏、无浏览器标签页的独立 App 窗口运行。
+完整说明见 README.md。
+IMPORTANT: This is a complete package. No hotfix package is required.
+
+Model runtime: Docker uses Python 3.11; native mode uses Python 3.11/3.12; scikit-learn 1.8.0 is required.
+
+Native environment persistence:
+- Windows: %LOCALAPPDATA%\ForgeGuardNexus\venv
+- Linux: ~/.local/share/forgeguard-nexus/venv
+- New project folders reuse the same user-level environment.
+- Missing state markers are repaired after verification without running pip.
+- Comments, line order and line endings do not invalidate the environment.
+
+Windows native installation:
+- When no reusable environment exists, click Yes to open ForgeGuard-Native-Setup.exe.
+- The setup window shows live progress instead of a blank terminal.
+- Installer log: runtime-data\native-installer.log
+- Python-only check: powershell -NoProfile -ExecutionPolicy Bypass -File .\deploy\windows\check-python.ps1
+- v0.7.9 searches official Python directories, PythonCore registry and Conda environments, preferring Python 3.12.

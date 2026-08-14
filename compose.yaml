@@ -1,0 +1,88 @@
+name: forgeguard-nexus-5
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+    image: forgeguard/nexus-api:0.7.9
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${FORGEGUARD_PORT:-8000}:8000"
+    environment:
+      FORGEGUARD_ENVIRONMENT: production
+      FORGEGUARD_APP_VERSION: "0.7.9"
+      FORGEGUARD_DATABASE_URL: ${FORGEGUARD_DATABASE_URL:-sqlite:///runtime-data/forgeguard.db}
+      FORGEGUARD_CORS_ORIGINS: "http://localhost:${FORGEGUARD_PORT:-8000},http://127.0.0.1:${FORGEGUARD_PORT:-8000}"
+      FORGEGUARD_DEPLOYMENT_PROFILE: ${FORGEGUARD_DEPLOYMENT_PROFILE:-portable-docker}
+      FORGEGUARD_PLATFORM_NAME: ${FORGEGUARD_PLATFORM_NAME:-Cross-platform industrial edge runtime}
+      FORGEGUARD_REASONING_PROVIDER: ${FORGEGUARD_REASONING_PROVIDER:-deterministic}
+      FORGEGUARD_LOCAL_LLM_BASE_URL: ${FORGEGUARD_LOCAL_LLM_BASE_URL:-}
+      FORGEGUARD_LOCAL_LLM_MODEL: ${FORGEGUARD_LOCAL_LLM_MODEL:-}
+    volumes:
+      - ./backend/knowledge:/workspace/backend/knowledge:ro
+      - ./backend/research:/workspace/backend/research:ro
+      - ./data:/workspace/data:ro
+      - ./artifacts:/workspace/artifacts
+      - ./runtime-data:/workspace/runtime-data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  postgres:
+    profiles: ["enterprise"]
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: forgeguard
+      POSTGRES_USER: forgeguard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-forgeguard-change-me}
+    volumes:
+      - forgeguard-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forgeguard -d forgeguard"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  edge-replay:
+    profiles: ["replay"]
+    build:
+      context: .
+      dockerfile: deploy/portable/Dockerfile.edge-replay
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./simulator:/workspace/simulator:ro
+      - ./data:/workspace/data:ro
+      - ./runtime-data:/workspace/runtime-data
+      - ./artifacts:/workspace/artifacts
+    command:
+      - python
+      - -m
+      - forgeguard_edge.cli
+      - stream-csv
+      - /workspace/simulator/sample_vibration.csv
+      - --server
+      - http://api:8000
+      - --node-id
+      - PORTABLE-EDGE-001
+      - --asset-id
+      - FG-BRG-001
+      - --spool-dir
+      - /workspace/runtime-data/edge-spool
+      - --max-frames
+      - "2"
+
+volumes:
+  forgeguard-postgres:

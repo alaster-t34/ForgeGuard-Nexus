@@ -1,0 +1,23 @@
+# Reference configuration consumed by scripts/run_visual_benchmark.py.
+# Dataset files are not redistributed. Set category and root for the official dataset.
+dataset:
+  name: MVTecAD
+  root: ./data/external/mvtec_ad
+  category: transistor
+models:
+  - Patchcore
+  - EfficientAd
+  - Dinomaly
+  - AnomalyDino
+metrics:
+  - AUROC
+  - F1Score
+  - AUPRO
+runtime:
+  accelerator: auto
+  devices: 1
+  seed: 42
+notes:
+  - Thresholds must be selected on validation data only.
+  - Report image-level and pixel-level metrics separately.
+  - Export p50/p95 latency, peak memory, model hash, dataset hash and installed anomalib version.

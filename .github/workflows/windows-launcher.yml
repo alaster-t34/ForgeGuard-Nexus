@@ -1,0 +1,28 @@
+name: Windows Launcher
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "windows-launcher/**"
+      - ".github/workflows/windows-launcher.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+      - name: Build Windows x64 launchers
+        run: |
+          mkdir -p dist/windows
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags '-s -w -H windowsgui' -o dist/windows/ForgeGuard-Nexus.exe windows-launcher/main_windows.go
+          cp dist/windows/ForgeGuard-Nexus.exe dist/windows/ForgeGuard-Nexus-Desktop.exe
+          cp dist/windows/ForgeGuard-Nexus.exe dist/windows/ForgeGuard-Nexus-Stop.exe
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags '-s -w' -o dist/windows/ForgeGuard-Native-Setup.exe windows-launcher/setup_windows.go
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ForgeGuard-Nexus-Windows-x64
+          path: dist/windows/*.exe

@@ -1,0 +1,111 @@
+{
+  "name": "ForgeGuard OpenEval-RM",
+  "version": "0.1.0",
+  "generated_at": "2026-07-23T12:41:03.841001Z",
+  "license": "Apache-2.0",
+  "description": "Deterministic physics-informed rotating-machinery evaluation set for model, agent and robustness regression. It is openly redistributable but must not be represented as experimental plant data.",
+  "sample_rate_hz": 12000.0,
+  "signal_length": 2048,
+  "labels": [
+    "normal",
+    "imbalance",
+    "misalignment",
+    "outer_race",
+    "inner_race",
+    "ball",
+    "lubrication",
+    "looseness"
+  ],
+  "split_policy": "Machine-group split: simulated machine IDs 00-08 train, 09-10 validation, 11-13 test. No window from a machine appears in multiple splits.",
+  "generator_commit": "competition-edition-v0.2",
+  "dataset_sha256": "768b1f7c4cee7082e7a415e23252f82b5f1ebef100cce96a954acf849835845d",
+  "samples": 448,
+  "external_benchmarks": [
+    {
+      "id": "cwru-bearing",
+      "name": "Case Western Reserve University Bearing Data Center",
+      "modalities": [
+        "vibration"
+      ],
+      "task": [
+        "fault-classification",
+        "cross-load-robustness"
+      ],
+      "source_url": "https://engineering.case.edu/bearingdatacenter/download-data-file",
+      "license": "Source terms must be checked before redistribution",
+      "redistribution": "download_by_user",
+      "notes": "12 kHz and 48 kHz drive-end data plus fan-end data; seeded faults and documented load conditions.",
+      "citation": "Case Western Reserve University Bearing Data Center."
+    },
+    {
+      "id": "paderborn-bearing",
+      "name": "Paderborn University Bearing DataCenter",
+      "modalities": [
+        "vibration",
+        "motor-current",
+        "speed",
+        "torque",
+        "temperature"
+      ],
+      "task": [
+        "fault-classification",
+        "cross-condition-generalization"
+      ],
+      "source_url": "https://mb.uni-paderborn.de/en/kat/research/bearing-datacenter/data-sets-and-download",
+      "license": "CC BY-NC 4.0",
+      "redistribution": "download_by_user",
+      "notes": "Healthy, artificial-damage and accelerated-life bearings under four operating conditions.",
+      "citation": "Lessmeier et al., KAt-DataCenter, Paderborn University."
+    },
+    {
+      "id": "xjtu-sy",
+      "name": "XJTU-SY Bearing Run-to-Failure Dataset",
+      "modalities": [
+        "vibration"
+      ],
+      "task": [
+        "remaining-useful-life",
+        "degradation-detection"
+      ],
+      "source_url": "https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets",
+      "license": "Public research dataset; verify source terms before redistribution",
+      "redistribution": "download_by_user",
+      "notes": "Complete run-to-failure trajectories for 15 rolling-element bearings.",
+      "citation": "Wang et al., IEEE Transactions on Reliability, 2020, DOI: 10.1109/TR.2018.2882682."
+    },
+    {
+      "id": "mvtec-ad",
+      "name": "MVTec AD",
+      "modalities": [
+        "image",
+        "segmentation-mask"
+      ],
+      "task": [
+        "visual-anomaly-detection",
+        "anomaly-localization"
+      ],
+      "source_url": "https://www.mvtec.com/research-teaching/datasets/mvtec-ad",
+      "license": "CC BY-NC-SA 4.0",
+      "redistribution": "download_by_user",
+      "notes": "15 categories with defect-free training images and anomalous test images with pixel-level annotations.",
+      "citation": null
+    },
+    {
+      "id": "mvtec-ad-2",
+      "name": "MVTec AD 2",
+      "modalities": [
+        "image",
+        "segmentation-mask"
+      ],
+      "task": [
+        "visual-anomaly-detection",
+        "distribution-shift-robustness"
+      ],
+      "source_url": "https://www.mvtec.com/research-teaching/datasets/mvtec-ad-2",
+      "license": "CC BY-NC-SA 4.0",
+      "redistribution": "download_by_user",
+      "notes": "Eight challenging scenarios, lighting shifts, public and private evaluation partitions.",
+      "citation": null
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+{
+  "id": "FCR-20260723T125118Z",
+  "created_at": "2026-07-23T12:51:18.428164Z",
+  "signal_cases": [
+    {
+      "case_id": "clean-normal",
+      "physical_fault": "normal",
+      "sensor_fault": "none",
+      "predicted_label": "normal",
+      "confidence": 0.876178041383193,
+      "quality_score": 0.9980468736417439,
+      "warnings": [],
+      "classification_correct": true,
+      "safety_gate_triggered": false
+    },
+    {
+      "case_id": "clean-imbalance",
+      "physical_fault": "imbalance",
+      "sensor_fault": "none",
+      "predicted_label": "imbalance",
+      "confidence": 0.8725862923495432,
+      "quality_score": 0.9980468694737369,
+      "warnings": [],
+      "classification_correct": true,
+      "safety_gate_triggered": false
+    },
+    {
+      "case_id": "clean-misalignment",
+      "physical_fault": "misalignment",
+      "sensor_fault": "none",
+      "predicted_label": "misalignment",
+      "confidence": 0.899369880922247,
+      "quality_score": 0.9980468745720017,
+      "warnings": [],
+      "classification_correct": true,
+      "safety_gate_triggered": false
+    },
+    {
+      "case_id": "clean-outer_race",
+      "physical_fault": "outer_race",
+      "sensor_fault": "none",
+      "predicted_label": "outer_race",
+      "confidence": 0.5792966214091682,
+      "quality_score": 0.9980468736392858,
+      "warnings": [],
+      "classification_correct": true,
+      "safety_gate_triggered": true
+    },
+    {
+      "case_id": "clean-inner_race",
+      "physical_fault": "inner_race",
+      "sensor_fault": "none",
+      "predicted_label": "inner_race",
+      "confidence": 0.8149057054277533,
+      "quality_score": 0.7480468736247334,
+      "warnings": [
+        "Broadband noise floor is inconsistent with the clean reference envelope"
+      ],
+      "classification_correct": true,
+      "safety_gate_triggered": false
+    },
+    {
+      "case_id": "clean-ball",
+      "physical_fault": "ball",
+      "sensor_fault": "none",
+      "predicted_label": "ball",
+      "confidence": 0.7392897748682775,
+      "quality_score": 0.9980468747736184,
+      "warnings": [],
+      "classification_correct": true,
+      "safety_gate_triggered": false
+    },
+    {
+      "case_id": "clean-lubrication",
+      "physical_fault": "lubrication",
+      "sensor_fault": "none",
+      "predicted_label": "lubrication",
+      "confidence": 0.8505013541511052,
+      "quality_score": 0.748046875,
+      "warnings": [
+        "Broadband noise floor is inconsistent with the clean reference envelope"
+      ],
+      "classification_correct": true,
+      "safety_gate_triggered": false
+    },
+    {
+      "case_id": "clean-looseness",
+      "physical_fault": "looseness",
+      "sensor_fault": "none",
+      "predicted_label": "looseness",
+      "confidence": 0.8789154918797655,
+      "quality_score": 0.9980468692192263,
+      "warnings": [],
+      "classification_correct": true,
+      "safety_gate_triggered": false
+    },
+    {
+      "case_id": "sensor-low_snr",
+      "physical_fault": "normal",
+      "sensor_fault": "low_snr",
+      "predicted_label": "normal",
+      "confidence": 0.6528768946717319,
+      "quality_score": 0.8344505927935922,
+      "warnings": [
+        "Broadband noise floor is inconsistent with the clean reference envelope"
+      ],
+      "classification_correct": true,
+      "safety_gate_triggered": true
+    },
+    {
+      "case_id": "sensor-dropout",
+      "physical_fault": "normal",
+      "sensor_fault": "dropout",
+      "predicted_label": "normal",
+      "confidence": 0.8587792961500071,
+      "quality_score": 0.535394688182191,
+      "warnings": [
+        "Possible acquisition dropout or disconnected sensor"
+      ],
+      "classification_correct": true,
+      "safety_gate_triggered": true
+    },
+    {
+      "case_id": "sensor-drift",
+      "physical_fault": "normal",
+      "sensor_fault": "drift",
+      "predicted_label": "normal",
+      "confidence": 0.8499666610943513,
+      "quality_score": 0.7545607889148968,
+      "warnings": [
+        "Large DC offset relative to signal RMS"
+      ],
+      "classification_correct": true,
+      "safety_gate_triggered": true
+    },
+    {
+      "case_id": "sensor-clipping",
+      "physical_fault": "normal",
+      "sensor_fault": "clipping",
+      "predicted_label": "normal",
+      "confidence": 0.7814498672018109,
+      "quality_score": 0.5428744930292388,
+      "warnings": [
+        "Possible analog or ADC clipping"
+      ],
+      "classification_correct": true,
+      "safety_gate_triggered": true
+    },
+    {
+      "case_id": "sensor-quantization",
+      "physical_fault": "normal",
+      "sensor_fault": "quantization",
+      "predicted_label": "normal",
+      "confidence": 0.8693762413724404,
+      "quality_score": 0.8170127121836948,
+      "warnings": [
+        "Low effective amplitude resolution or quantization"
+      ],
+      "classification_correct": true,
+      "safety_gate_triggered": true
+    },
+    {
+      "case_id": "sensor-speed_shift",
+      "physical_fault": "normal",
+      "sensor_fault": "speed_shift",
+      "predicted_label": "normal",
+      "confidence": 0.8717020217409233,
+      "quality_score": 0.8777279470856608,
+      "warnings": [
+        "Reported RPM and low-frequency order content are inconsistent"
+      ],
+      "classification_correct": true,
+      "safety_gate_triggered": true
+    },
+    {
+      "case_id": "sensor-impulse_interference",
+      "physical_fault": "normal",
+      "sensor_fault": "impulse_interference",
+      "predicted_label": "ball",
+      "confidence": 0.6486653406852917,
+      "quality_score": 0.528046875,
+      "warnings": [
+        "Broadband noise floor is inconsistent with the clean reference envelope",
+        "Sparse impulse interference exceeds the sensor-integrity threshold"
+      ],
+      "classification_correct": false,
+      "safety_gate_triggered": true
+    }
+  ],
+  "workflow_cases": [
+    {
+      "mode": "error",
+      "tool_name": "inventory.query",
+      "recorded_status": "failed",
+      "error": "RuntimeError: fault-campaign-error",
+      "safely_contained": true
+    },
+    {
+      "mode": "timeout",
+      "tool_name": "inventory.query",
+      "recorded_status": "failed",
+      "error": "TimeoutError: fault-campaign-timeout",
+      "safely_contained": true
+    },
+    {
+      "mode": "empty_result",
+      "tool_name": "inventory.query",
+      "recorded_status": "succeeded",
+      "error": null,
+      "safely_contained": true
+    }
+  ],
+  "clean_fault_accuracy": 1.0,
+  "corrupted_signal_safe_response_rate": 1.0,
+  "workflow_containment_rate": 1.0,
+  "artifact_paths": {
+    "json": "artifacts/fault-campaigns/latest.json",
+    "markdown": "artifacts/fault-campaigns/latest.md"
+  },
+  "limitations": [
+    "Signal cases are deterministic fault injections, not destructive physical-rig faults.",
+    "Physical injection and seeded-damage specimens must be reported separately.",
+    "The campaign evaluates detection and containment, not permission to control equipment."
+  ]
+}

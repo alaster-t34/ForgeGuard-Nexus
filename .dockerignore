@@ -1,0 +1,12 @@
+.git
+.github
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+runtime-data/*
+artifacts/bench-evidence/*
+artifacts/*.png
+*.zip
+*.tar.gz
+.venv
+.venv-path.txt

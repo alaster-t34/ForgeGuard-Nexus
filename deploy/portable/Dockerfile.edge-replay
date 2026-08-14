@@ -1,0 +1,9 @@
+FROM python:3.11-slim-bookworm
+ARG PIP_INDEX_URL=https://pypi.org/simple
+ENV PYTHONPATH=/workspace/edge-node PIP_INDEX_URL=${PIP_INDEX_URL} PYTHONUNBUFFERED=1
+WORKDIR /workspace
+COPY edge-node/requirements.txt /workspace/edge-node/requirements.txt
+RUN python -m pip install --no-cache-dir --prefer-binary -r /workspace/edge-node/requirements.txt
+COPY edge-node /workspace/edge-node
+WORKDIR /workspace/edge-node
+CMD ["python", "-m", "forgeguard_edge.cli", "platform-info"]

@@ -1,0 +1,9 @@
+{
+  "name": "ForgeGuard Nexus 5.0",
+  "short_name": "ForgeGuard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06111b",
+  "theme_color": "#06111b",
+  "description": "Human-centric Industrial 5.0 edge maintenance agent platform"
+}

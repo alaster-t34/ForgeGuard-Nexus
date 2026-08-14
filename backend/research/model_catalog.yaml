@@ -1,0 +1,84 @@
+catalog_version: 2
+selection_principle: "No single model is universally best. Deployment follows leakage-free validation, robustness, latency, calibration, licensing, and safety gates."
+implemented:
+  - id: dsp-calibrated-hgb-v0.2
+    role: vibration_fault_classification
+    status: benchmark_selected
+    source: ForgeGuard OpenEval-RM benchmark
+    license: Apache-2.0
+    rationale: "Best composite score in the current machine-group benchmark, combining clean accuracy, sensor-corruption robustness, calibration, and CPU latency."
+    deployment: [cpu, x86_64, arm64]
+  - id: rules-calibrated-fallback
+    role: deterministic_safety_fallback
+    status: implemented
+    source: ForgeGuard Nexus
+    license: Apache-2.0
+    rationale: "Reproducible path with explicit uncertainty and safety gates when learned artifacts are unavailable."
+    deployment: [cpu, edge]
+visual_candidates:
+  - id: anomalib-efficientad
+    role: visual_fast_anomaly
+    status: benchmark_candidate
+    source: https://github.com/open-edge-platform/anomalib
+    license: Apache-2.0
+    rationale: "Fast student-teacher baseline for constrained inspection after camera-domain calibration."
+    deployment: [cpu, cuda, openvino]
+  - id: anomalib-patchcore
+    role: visual_low_shot_anomaly
+    status: benchmark_candidate
+    source: https://github.com/open-edge-platform/anomalib
+    license: Apache-2.0
+    rationale: "Strong and widely reproduced memory-bank baseline for few-normal-sample inspection."
+    deployment: [cpu, cuda, openvino]
+  - id: anomalib-dinomaly
+    role: visual_multiclass_anomaly
+    status: benchmark_candidate
+    source: https://github.com/open-edge-platform/anomalib
+    license: Apache-2.0
+    rationale: "DINOv2-based transformer reconstruction candidate; current framework behavior and multi-class limitations must be verified against the installed release."
+    deployment: [cuda]
+  - id: anomalib-anomalydino
+    role: visual_foundation_anomaly
+    status: benchmark_candidate
+    source: https://github.com/open-edge-platform/anomalib
+    license: Apache-2.0
+    rationale: "Foundation-feature anomaly candidate added to recent Anomalib releases."
+    deployment: [cuda, openvino]
+  - id: anomalib-anomalyvfm
+    role: visual_zero_shot_anomaly
+    status: research_candidate
+    source: https://github.com/open-edge-platform/anomalib
+    license: Apache-2.0
+    rationale: "Zero-shot visual foundation-model candidate; operational calibration and licensing of all weights remain mandatory."
+    deployment: [gpu]
+  - id: indusagent
+    role: open_vocabulary_visual_reasoning
+    status: research_adapter
+    source: https://arxiv.org/abs/2605.20682
+    rationale: "Active crop, high-frequency enhancement, and prior retrieval for ambiguous anomalies."
+    deployment: [gpu]
+signal_candidates:
+  - id: bearllm
+    role: vibration_language_reasoning
+    status: research_adapter
+    source: https://arxiv.org/abs/2408.11281
+    rationale: "Unified vibration representation with healthy references for bearing health reasoning."
+    deployment: [gpu]
+  - id: echo
+    role: machine_signal_foundation
+    status: evaluation_candidate
+    source: https://arxiv.org/abs/2508.14689
+    rationale: "Frequency-aware representation candidate for anomaly and fault identification."
+    deployment: [gpu]
+  - id: timeradar
+    role: time_series_anomaly_foundation
+    status: evaluation_candidate
+    source: https://arxiv.org/abs/2602.19068
+    rationale: "Fractional time-frequency foundation model candidate for cross-domain anomaly detection."
+    deployment: [gpu]
+  - id: legacy-fp-flnet
+    role: bearing_rul
+    status: available_legacy_adapter
+    source: user-owned-existing-project
+    rationale: "Disclosed RUL baseline; retained only under its validated protocol and compared against new candidates."
+    deployment: [cpu, cuda, embedded]

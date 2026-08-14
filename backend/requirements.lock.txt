@@ -1,0 +1,15 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+pydantic-settings==2.7.1
+sqlalchemy==2.0.36
+httpx==0.28.1
+numpy==1.26.4
+scipy==1.13.1
+PyYAML==6.0.2
+orjson==3.10.13
+scikit-learn==1.8.0
+joblib==1.4.2
+psycopg[binary]==3.2.3
+
+python-multipart==0.0.20

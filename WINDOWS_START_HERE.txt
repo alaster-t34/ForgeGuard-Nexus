@@ -1,0 +1,35 @@
+ForgeGuard Nexus 5.0 / Windows x64 / 0.7.9
+===========================================
+
+1. 解压完整 Windows ZIP，不要单独移动 EXE。
+2. 推荐先启动 Docker Desktop。
+3. 双击 ForgeGuard-Nexus.exe 或 ForgeGuard-Nexus-Desktop.exe。
+4. 软件会以 Microsoft Edge/Chrome App Mode 打开独立窗口：
+   - 没有地址栏
+   - 没有普通浏览器标签页
+   - 使用独立软件配置目录
+5. 彻底停止后台服务时，双击 ForgeGuard-Nexus-Stop.exe。
+
+需要普通浏览器模式：
+  ForgeGuard-Nexus.exe web
+
+没有 Docker 时会使用持久化环境：
+  %LOCALAPPDATA%\ForgeGuardNexus\venv
+如果环境不存在或依赖版本变化，点击“是”后会打开独立安装进度窗口：
+  ForgeGuard-Native-Setup.exe
+窗口会显示环境创建、依赖下载、模型校验和错误信息，不再出现空白终端。
+也可以手动运行：
+  deploy\windows\install-native.ps1
+只检查 Python 3.12/3.11，不安装依赖：
+  powershell -NoProfile -ExecutionPolicy Bypass -File .\deploy\windows\check-python.ps1
+v0.7.9 会检查 py、官方 Python 目录、PATH、Conda 环境和 PythonCore 注册表，并优先使用 Python 3.12。
+升级、重新解压或更换项目目录时，会通过用户级 venv-path.txt 自动复用环境；状态文件丢失也会先校验并修复，不会直接重装。
+
+安装日志：runtime-data\native-installer.log
+
+EXE 是真实 Windows x64 桌面启动器，但仍依赖完整项目、后端运行时和系统 Edge/Chrome 显示引擎。
+日志：runtime-data\windows-launcher.log
+完整说明：README.md 与 docs\WINDOWS_EXE_ZH.md
+IMPORTANT: This is a complete package. No hotfix package is required.
+
+Model runtime: Docker uses Python 3.11; native mode uses Python 3.11/3.12; scikit-learn 1.8.0 is required.

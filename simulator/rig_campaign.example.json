@@ -1,0 +1,60 @@
+{
+  "campaign_id": "RIG-2026-001",
+  "node_id": "BENCH-DAQ-001",
+  "asset_id": "FG-BRG-001",
+  "title": "Healthy baseline and guarded seeded-fault validation",
+  "operator_id": "replace-with-authorized-operator-id",
+  "specimen": {
+    "specimen_id": "BRG-6205-SPECIMEN-001",
+    "condition": "unknown",
+    "declared_fault_label": null,
+    "provenance": "Record supplier, prior operation, and chain of custody before acquisition",
+    "fault_creation_method": null,
+    "post_test_inspection": null,
+    "photo_uris": []
+  },
+  "sensor": {
+    "manufacturer": "replace-me",
+    "model": "replace-me",
+    "serial_number": null,
+    "sensitivity": null,
+    "sensitivity_unit": "mV/g",
+    "measurement_range": null,
+    "bandwidth_hz": null,
+    "axis": "radial",
+    "position": "drive-end bearing housing",
+    "mounting": "stud-mounted",
+    "calibration": {
+      "performed_at": null,
+      "method": "replace-with-calibration-method",
+      "reference": null,
+      "sensitivity": null,
+      "unit": "g",
+      "certificate_uri": null
+    }
+  },
+  "daq": {
+    "manufacturer": "replace-me",
+    "model": "replace-me",
+    "serial_number": null,
+    "bit_depth": 24,
+    "input_range": null,
+    "coupling": "IEPE or disclose actual coupling",
+    "anti_alias_filter": "disclose cutoff and order",
+    "clock_source": "internal"
+  },
+  "safety": {
+    "guard_installed": true,
+    "emergency_stop_verified": true,
+    "max_rpm": 2400,
+    "max_load_percent": 100,
+    "approved_by": "replace-with-authorized-safety-approver"
+  },
+  "operating_points": [
+    {"rpm": 1200, "load_percent": 30, "duration_seconds": 60, "repetitions": 3},
+    {"rpm": 1800, "load_percent": 60, "duration_seconds": 60, "repetitions": 3},
+    {"rpm": 2400, "load_percent": 90, "duration_seconds": 60, "repetitions": 3}
+  ],
+  "protocol_version": "forgeguard-rig-v0.2",
+  "notes": "Replace every placeholder and obtain authorization before running the rig."
+}
