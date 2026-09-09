@@ -7,6 +7,7 @@ from app.research_orchestration.advanced_schemas import (
     EvidenceGraphEdgeCreate,
     GraphEdgeKind,
     KnowledgeChallengeCreate,
+    KnowledgeRevalidation,
     KnowledgeTransitionCreate,
     SchedulerTickRequest,
 )
@@ -26,10 +27,10 @@ from app.research_orchestration.schemas import (
 from app.research_orchestration.service import ResearchOrchestrator
 
 
-def make_branch(service: ResearchOrchestrator):
+def make_branch(service: ResearchOrchestrator, suffix: str = ""):
     return service.create_branch(
         ResearchBranchCreate(
-            title="Robust claim",
+            title=f"Robust claim{suffix}",
             question="Does the proposed gate reject unsupported scientific claims?",
             hypothesis="A claim with unresolved counterexamples or non-independent review is rejected.",
             owner="researcher-a",
@@ -37,7 +38,7 @@ def make_branch(service: ResearchOrchestrator):
     )
 
 
-def add_support(service: ResearchOrchestrator, branch_id: str):
+def add_support(service: ResearchOrchestrator, branch_id: str, actor_suffix: str = ""):
     branch = service.add_evidence(
         branch_id,
         EvidenceCreate(
@@ -53,7 +54,7 @@ def add_support(service: ResearchOrchestrator, branch_id: str):
     service.add_critic_review(
         branch.id,
         ReviewCreate(
-            reviewer=ResearchActor(id="critic-1", role="critic", label="Independent critic"),
+            reviewer=ResearchActor(id=f"critic-{actor_suffix or '1'}", role="critic", label="Independent critic"),
             verdict=ReviewVerdict.PASS,
             summary="No blocking objection found.",
             checked_evidence_ids=[evidence_id],
@@ -62,7 +63,7 @@ def add_support(service: ResearchOrchestrator, branch_id: str):
     service.add_verifier_review(
         branch.id,
         ReviewCreate(
-            reviewer=ResearchActor(id="verifier-1", role="verifier", label="Independent verifier"),
+            reviewer=ResearchActor(id=f"verifier-{actor_suffix or '1'}", role="verifier", label="Independent verifier"),
             verdict=ReviewVerdict.PASS,
             summary="Evidence replayed successfully.",
             checked_evidence_ids=[evidence_id],
@@ -71,7 +72,7 @@ def add_support(service: ResearchOrchestrator, branch_id: str):
     return service.get_branch(branch.id)
 
 
-def pass_council(service: ResearchOrchestrator, branch_id: str):
+def pass_council(service: ResearchOrchestrator, branch_id: str, actor_suffix: str = ""):
     session = service.open_council(branch_id)
     roles = [
         CouncilRole.RESEARCHER,
@@ -85,7 +86,7 @@ def pass_council(service: ResearchOrchestrator, branch_id: str):
             session.id,
             CouncilContributionCreate(
                 role=role,
-                actor_id=f"actor-{index}",
+                actor_id=f"actor-{actor_suffix}-{index}",
                 actor_label=role.value,
                 verdict=CouncilVerdict.PASS,
                 summary=f"{role.value} completed independent review.",
@@ -94,6 +95,14 @@ def pass_council(service: ResearchOrchestrator, branch_id: str):
         )
     assert service.council_evaluate(session.id).accepted is True
     return session
+
+
+def make_accepted(service: ResearchOrchestrator, suffix: str):
+    branch = make_branch(service, suffix=f" {suffix}")
+    branch = add_support(service, branch.id, actor_suffix=suffix)
+    pass_council(service, branch.id, actor_suffix=suffix)
+    assert service.gate_report(branch.id).accepted is True
+    return service.accept(branch.id), branch
 
 
 def test_gate_blocks_unresolved_counterexample(tmp_path):
@@ -292,6 +301,81 @@ def test_verified_branch_enters_versioned_accepted_knowledge(tmp_path):
         KnowledgeTransitionCreate(actor="formal-verifier", reason="Challenge invalidates the scoped statement."),
     )
     assert revoked.state.value == "revoked"
+
+
+def test_challenged_knowledge_can_be_revised_only_by_verified_successor(tmp_path):
+    service = ResearchOrchestrator(tmp_path / "research.json")
+    original, original_branch = make_accepted(service, "original")
+    replacement, _ = make_accepted(service, "replacement")
+    evidence_id = original_branch.evidence[0].id
+    service.challenge_knowledge(
+        original.id,
+        KnowledgeChallengeCreate(
+            title="Scope failure",
+            description="The original statement is too broad and needs a verified narrower successor.",
+            source="pytest://scope-failure",
+            evidence_node_ids=[evidence_id],
+            raised_by="devils-advocate",
+        ),
+    )
+    challenge = next(item for item in service.evolution_snapshot().challenges if item.knowledge_id == original.id)
+    successor = service.evolution.revise(
+        original.id,
+        replacement,
+        KnowledgeRevalidation(
+            challenge_id=challenge.id,
+            actor="formal-verifier-revision",
+            rationale="Replacement passed the complete independent gate with narrower scope.",
+        ),
+    )
+    snapshot = service.evolution_snapshot()
+    old = next(item for item in snapshot.versions if item.id == original.id)
+    assert old.state.value == "revised"
+    assert old.successor_id == successor.id
+    assert successor.state.value == "accepted"
+    assert successor.version == 2
+    assert successor.parent_version_id == original.id
+    edge = next(
+        item for item in service.graph_snapshot().edges
+        if item.source_id == successor.id and item.target_id == original.id
+    )
+    assert edge.kind.value == "revises"
+
+
+def test_challenged_knowledge_can_be_superseded_by_verified_replacement(tmp_path):
+    service = ResearchOrchestrator(tmp_path / "research.json")
+    original, original_branch = make_accepted(service, "legacy")
+    replacement, _ = make_accepted(service, "successor")
+    service.challenge_knowledge(
+        original.id,
+        KnowledgeChallengeCreate(
+            title="Competing verified explanation",
+            description="A stronger independently verified explanation replaces the old claim.",
+            source="pytest://supersession",
+            evidence_node_ids=[original_branch.evidence[0].id],
+            raised_by="literature-critic",
+        ),
+    )
+    challenge = next(item for item in service.evolution_snapshot().challenges if item.knowledge_id == original.id)
+    successor = service.evolution.supersede(
+        original.id,
+        replacement,
+        KnowledgeRevalidation(
+            challenge_id=challenge.id,
+            actor="formal-verifier-supersession",
+            rationale="Replacement dominates the old scoped claim after independent verification.",
+        ),
+    )
+    snapshot = service.evolution_snapshot()
+    old = next(item for item in snapshot.versions if item.id == original.id)
+    assert old.state.value == "superseded"
+    assert old.successor_id == successor.id
+    assert successor.state.value == "accepted"
+    edge = next(
+        item for item in service.graph_snapshot().edges
+        if item.source_id == successor.id and item.target_id == original.id
+    )
+    assert edge.kind.value == "supersedes"
 
 
 def test_scheduler_forks_unresolved_counterexample(tmp_path):
