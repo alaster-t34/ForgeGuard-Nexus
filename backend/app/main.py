@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.routes import router
 from app.bootstrap import seed_store
 from app.config import get_settings
+from app.research_orchestration.evolution_routes import router as evolution_router
 from app.research_orchestration.routes import router as research_router
 from app.runtime import runtime
 
@@ -27,7 +28,8 @@ app = FastAPI(
     version=settings.app_version,
     description=(
         "Verified Scientific-Agent Platform with evidence-driven industrial maintenance, "
-        "research branches, independent criticism, verification gates, and accepted knowledge."
+        "research branches, evidence DAGs, adversarial councils, verification gates, "
+        "research scheduling, and evolving accepted knowledge."
     ),
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
@@ -41,6 +43,7 @@ app.add_middleware(
 )
 app.include_router(router, prefix=settings.api_prefix)
 app.include_router(research_router, prefix=settings.api_prefix)
+app.include_router(evolution_router, prefix=settings.api_prefix)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
@@ -55,7 +58,7 @@ async def root():
         return FileResponse(index)
     return {
         "name": "ForgeGuard Nexus",
-        "message": "Verified scientific agents: branch, challenge, verify, accept.",
+        "message": "Verified scientific agents: branch, challenge, verify, evolve.",
         "docs": "/docs",
         "research_api": f"{settings.api_prefix}/research/overview",
     }
