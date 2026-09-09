@@ -6,7 +6,9 @@ from threading import RLock
 
 from app.research_orchestration.advanced_schemas import (
     ChallengeStatus,
+    EvidenceGraphNode,
     GraphEdgeKind,
+    GraphNodeKind,
     KnowledgeChallenge,
     KnowledgeChallengeCreate,
     KnowledgeEvent,
@@ -128,6 +130,8 @@ class KnowledgeEvolutionStore:
     def _terminal_transition(self, knowledge_id: str, target: KnowledgeState, payload: KnowledgeTransitionCreate) -> KnowledgeVersion:
         with self._lock:
             version = self.get(knowledge_id)
+            if version.state in {KnowledgeState.REVOKED, KnowledgeState.SUPERSEDED}:
+                raise ValueError(f"Knowledge is already terminal: {version.state.value}")
             old = version.state
             version.state = target
             version.updated_at = utc_now()
@@ -149,20 +153,10 @@ class KnowledgeEvolutionStore:
             self._persist()
             return version
 
-    def revise(
-        self,
-        knowledge_id: str,
-        accepted: AcceptedKnowledge,
-        payload: KnowledgeRevalidation,
-    ) -> KnowledgeVersion:
+    def revise(self, knowledge_id: str, accepted: AcceptedKnowledge, payload: KnowledgeRevalidation) -> KnowledgeVersion:
         return self._successor(knowledge_id, accepted, payload, KnowledgeState.REVISED, GraphEdgeKind.REVISES)
 
-    def supersede(
-        self,
-        knowledge_id: str,
-        accepted: AcceptedKnowledge,
-        payload: KnowledgeRevalidation,
-    ) -> KnowledgeVersion:
+    def supersede(self, knowledge_id: str, accepted: AcceptedKnowledge, payload: KnowledgeRevalidation) -> KnowledgeVersion:
         return self._successor(knowledge_id, accepted, payload, KnowledgeState.SUPERSEDED, GraphEdgeKind.SUPERSEDES)
 
     def _successor(
@@ -175,6 +169,8 @@ class KnowledgeEvolutionStore:
     ) -> KnowledgeVersion:
         with self._lock:
             current = self.get(knowledge_id)
+            if current.state != KnowledgeState.CHALLENGED:
+                raise ValueError("Only challenged knowledge can enter revalidation transition")
             challenge = self._challenges.get(payload.challenge_id)
             if challenge is None or challenge.knowledge_id != knowledge_id:
                 raise KeyError(f"Unknown challenge for knowledge item: {payload.challenge_id}")
@@ -203,10 +199,20 @@ class KnowledgeEvolutionStore:
             self._versions[current.id] = current
             self._versions[successor.id] = successor
             self._challenges[challenge.id] = challenge
-            self.graph.add_knowledge(accepted)
-            graph_node = self.graph.get_node(accepted.id)
-            graph_node.id = successor.id
-            self.graph._put_node(graph_node)
+
+            self.graph._put_node(EvidenceGraphNode(
+                id=successor.id,
+                branch_id=accepted.branch_id,
+                kind=GraphNodeKind.KNOWLEDGE,
+                label=accepted.title,
+                statement=accepted.statement,
+                source_record_id=successor.id,
+                metadata={
+                    "root_id": successor.root_id,
+                    "version": successor.version,
+                    "accepted_from": accepted.id,
+                },
+            ))
             self.graph.link_knowledge_transition(successor.id, current.id, edge_kind, payload.rationale)
             self._events.append(KnowledgeEvent(
                 knowledge_id=current.id,
