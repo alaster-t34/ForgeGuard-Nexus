@@ -1,7 +1,7 @@
 {
   "name": "forgeguard-nexus-console",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.10.0",
   "scripts": {
     "serve": "python3 -m http.server 5173"
   }
