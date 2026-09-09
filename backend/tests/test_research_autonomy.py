@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from app.research_orchestration.advanced_schemas import KnowledgeChallengeCreate
 from app.research_orchestration.autonomy import ResearchAutonomyController
 from app.research_orchestration.autonomy_schemas import (
     AutoExperimentKind,
@@ -206,10 +207,7 @@ def test_knowledge_challenge_propagates_to_descendant_branch(tmp_path):
 
     version = research.challenge_knowledge(
         knowledge.id,
-        payload=__import__(
-            "app.research_orchestration.advanced_schemas",
-            fromlist=["KnowledgeChallengeCreate"],
-        ).KnowledgeChallengeCreate(
+        KnowledgeChallengeCreate(
             title="New contradiction",
             description="New evidence challenges the accepted knowledge item.",
             source="pytest://knowledge-challenge",
