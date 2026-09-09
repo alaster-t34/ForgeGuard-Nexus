@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#06111b" />
   <meta name="description" content="ForgeGuard Research Nexus — Verified Scientific-Agent Platform" />
-  <link rel="stylesheet" href="/ui/research.css?v=0.8.0" />
+  <link rel="stylesheet" href="/ui/research.css?v=0.9.0" />
   <title>ForgeGuard Research Nexus</title>
 </head>
 <body>
@@ -20,20 +20,38 @@
       <div>
         <p class="eyebrow">RESEARCH ORCHESTRATION LAYER</p>
         <h1>不要让一个 Agent<br/>既提出结论，又给自己盖章。</h1>
-        <p class="lead">ForgeGuard 把科研拆成可追溯 branch，把反例、实验、独立批评与验证变成强制门控。工业维护是第一个验证域，不再是整个平台的边界。</p>
+        <p class="lead">ForgeGuard 把科研拆成可追溯 branch，把反例、实验、独立批评与验证变成强制门控。现在它还会自动分叉失败路线、维护证据 DAG、召开五角色对抗评议会，并允许已接受知识被新反例推翻。</p>
       </div>
       <div class="gate-rail" aria-label="Research Gate">
         <div><span>01</span><b>Hypothesis</b><small>可证伪假设</small></div><i></i>
-        <div><span>02</span><b>Evidence</b><small>证据与反例</small></div><i></i>
-        <div><span>03</span><b>Independent critic</b><small>独立质疑</small></div><i></i>
-        <div><span>04</span><b>Verifier</b><small>独立复核</small></div><i></i>
-        <div class="accepted"><span>05</span><b>Accepted knowledge</b><small>可追溯知识</small></div>
+        <div><span>02</span><b>Evidence DAG</b><small>证据 / 反例 / 实验</small></div><i></i>
+        <div><span>03</span><b>Critic</b><small>独立质疑</small></div><i></i>
+        <div><span>04</span><b>Research Council</b><small>五角色对抗审查</small></div><i></i>
+        <div class="accepted"><span>05</span><b>Evolving knowledge</b><small>Accepted → Challenged → ...</small></div>
       </div>
     </section>
 
     <section id="overview" class="metrics" aria-label="Research overview"></section>
 
     <section class="section-head">
+      <div><p class="eyebrow">AUTONOMOUS RESEARCH CONTROL</p><h2>自动科研控制层</h2><p>Scheduler 只根据显式失败信号和挑战生成 / fork / kill branch，不允许凭模型自信度制造“科学进展”。</p></div>
+      <button id="run-scheduler" class="primary">Run scheduler tick</button>
+    </section>
+    <section id="advanced-overview" class="metrics" aria-label="Advanced research overview"></section>
+    <section class="two-column">
+      <article class="panel">
+        <header><div><p class="eyebrow">EVIDENCE GRAPH + COUNCIL</p><h2>证据 DAG 与对抗评议会</h2></div><span id="graph-count" class="count"></span></header>
+        <p class="panel-intro">Claim → Evidence → Counterexample → Experiment 不再塞在数组里。关系显式入图，任何会形成循环论证的边都会被拒绝。</p>
+        <div id="council-feed" class="feed"></div>
+      </article>
+      <article class="panel">
+        <header><div><p class="eyebrow">KNOWLEDGE EVOLUTION</p><h2>知识演化链</h2></div><span id="evolution-count" class="count"></span></header>
+        <p class="panel-intro">Accepted Knowledge 不是圣经。新反例可将它置为 Challenged，经重新验证后只能进入 Revised、Revoked 或 Superseded。</p>
+        <div id="evolution-feed" class="feed"></div>
+      </article>
+    </section>
+
+    <section class="section-head" style="margin-top:42px">
       <div><p class="eyebrow">RESEARCH BRANCHES</p><h2>并行研究分支</h2><p>每个 branch 都必须保留 Question、Hypothesis、Evidence、Counterexample、Experiment、Result 与 Status。</p></div>
       <button id="new-branch-button" class="primary">+ New research branch</button>
     </section>
@@ -58,7 +76,7 @@
       </article>
       <article class="panel knowledge-panel">
         <header><div><p class="eyebrow">ACCEPTED KNOWLEDGE</p><h2>已接受知识账本</h2></div><span id="knowledge-count" class="count"></span></header>
-        <p class="panel-intro">只有通过完整 Research Gate 的结果才进入这里。每条记录保留证据 ID、critic review 与 verifier review。</p>
+        <p class="panel-intro">只有通过完整 Research Gate 与五角色 Council 的结果才进入这里。历史版本不被覆盖，后续挑战进入 Knowledge Evolution。</p>
         <div id="knowledge-ledger" class="feed"></div>
       </article>
     </section>
@@ -70,6 +88,6 @@
   </dialog>
 
   <div id="toast" role="status"></div>
-  <script type="module" src="/ui/research.js?v=0.8.0"></script>
+  <script type="module" src="/ui/research.js?v=0.9.0"></script>
 </body>
 </html>
