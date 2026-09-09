@@ -6,8 +6,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "ForgeGuard Nexus 5.0"
-    app_version: str = "0.7.9"
+    app_name: str = "ForgeGuard Nexus Scientific"
+    app_version: str = "0.8.0"
     environment: str = "development"
     api_prefix: str = "/api/v1"
     database_url: str = "sqlite:///runtime-data/forgeguard.db"
@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     allow_external_search: bool = False
     approval_required_for_high_risk: bool = True
     deployment_profile: str = "portable"
-    platform_name: str = "Cross-platform edge runtime"
-    operation_mode: str = "simulation-replay-live"
+    platform_name: str = "Cross-platform scientific + edge runtime"
+    operation_mode: str = "research-orchestration-simulation-replay-live"
 
     model_config = SettingsConfigDict(
         env_file=(".env", ".env.local"),
