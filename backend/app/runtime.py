@@ -11,6 +11,7 @@ from app.domain.enums import ToolRisk
 from app.models.deterministic import DeterministicFusionAdapter
 from app.models.registry import ModelRegistry
 from app.models.vibration_selected import SelectedVibrationAdapter
+from app.research_orchestration import ResearchOrchestrator
 from app.services.analytics import AnalyticsService
 from app.services.knowledge import LocalKnowledgeBase
 from app.services.reasoning import ReasoningGateway
@@ -34,6 +35,7 @@ class Runtime:
     benchmark: BenchmarkRunner
     bench: BenchGateway
     analysis: IndustrialDataAnalysisService
+    research: ResearchOrchestrator
 
 
 settings = get_settings()
@@ -57,6 +59,8 @@ benchmark = BenchmarkRunner(project_root)
 bench = BenchGateway(models, project_root / "artifacts" / "bench-evidence")
 analytics = AnalyticsService(store, bench)
 reasoning = ReasoningGateway(settings, store)
+research = ResearchOrchestrator(project_root / "runtime-data" / "research-state.json")
+research.seed_demo()
 
 
 async def query_asset(asset_id: str):
@@ -168,4 +172,5 @@ runtime = Runtime(
     benchmark=benchmark,
     bench=bench,
     analysis=analysis,
+    research=research,
 )
