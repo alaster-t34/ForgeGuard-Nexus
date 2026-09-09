@@ -4,6 +4,26 @@ import json
 from pathlib import Path
 from threading import RLock
 
+from app.research_orchestration.advanced_schemas import (
+    CouncilContributionCreate,
+    CouncilEvaluation,
+    CouncilSession,
+    EvidenceGraphEdge,
+    EvidenceGraphEdgeCreate,
+    EvidenceGraphSnapshot,
+    KnowledgeChallengeCreate,
+    KnowledgeEvolutionSnapshot,
+    KnowledgeRevalidation,
+    KnowledgeTransitionCreate,
+    KnowledgeVersion,
+    ResearchSystemOverview,
+    SchedulerRun,
+    SchedulerTickRequest,
+)
+from app.research_orchestration.council import AdversarialResearchCouncil
+from app.research_orchestration.evidence_graph import EvidenceGraphStore
+from app.research_orchestration.knowledge_evolution import KnowledgeEvolutionStore
+from app.research_orchestration.scheduler import ResearchScheduler
 from app.research_orchestration.schemas import (
     AcceptedKnowledge,
     BranchResultUpdate,
@@ -32,11 +52,11 @@ from app.research_orchestration.schemas import (
 
 
 class ResearchOrchestrator:
-    """Persistent, auditable research state machine.
+    """Persistent, auditable research state machine with adversarial evolution.
 
-    A branch is allowed into Accepted Knowledge only when evidence, negative-result
-    handling, an independent critic, and an independent verifier all pass explicit
-    deterministic gates. Language-model confidence is deliberately not a gate.
+    Acceptance is deliberately deterministic: recorded support, resolved negative
+    evidence, independent review, evidence coverage and a five-role adversarial
+    council must all pass. Accepted knowledge remains challengeable and versioned.
     """
 
     def __init__(self, state_path: Path):
@@ -45,7 +65,13 @@ class ResearchOrchestrator:
         self._branches: dict[str, ResearchBranch] = {}
         self._accepted: dict[str, AcceptedKnowledge] = {}
         self._cross_pollination: list[CrossPollinationDigest] = []
+        base = state_path.parent
+        self.graph = EvidenceGraphStore(base / "evidence-graph.json")
+        self.council = AdversarialResearchCouncil(base / "research-council.json", self.graph)
+        self.evolution = KnowledgeEvolutionStore(base / "knowledge-evolution.json", self.graph)
+        self.scheduler = ResearchScheduler(base / "research-scheduler.json")
         self._load()
+        self._reconcile_graph()
 
     def _load(self) -> None:
         if not self.state_path.exists():
@@ -65,8 +91,6 @@ class ResearchOrchestrator:
                 for item in raw.get("cross_pollination", [])
             ]
         except (OSError, ValueError, TypeError, KeyError):
-            # Runtime state must never prevent the API from starting. A malformed
-            # state file is treated as unavailable evidence rather than trusted data.
             self._branches = {}
             self._accepted = {}
             self._cross_pollination = []
@@ -74,7 +98,7 @@ class ResearchOrchestrator:
     def _persist(self) -> None:
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
-            "schema_version": 1,
+            "schema_version": 2,
             "branches": [item.model_dump(mode="json") for item in self._branches.values()],
             "accepted_knowledge": [item.model_dump(mode="json") for item in self._accepted.values()],
             "cross_pollination": [item.model_dump(mode="json") for item in self._cross_pollination],
@@ -82,6 +106,26 @@ class ResearchOrchestrator:
         temp = self.state_path.with_suffix(self.state_path.suffix + ".tmp")
         temp.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
         temp.replace(self.state_path)
+
+    def _reconcile_graph(self) -> None:
+        """Backfill the DAG for existing v0.8 state without rewriting old records."""
+        for branch in self._branches.values():
+            self.graph.ensure_branch(branch)
+            for evidence in branch.evidence:
+                self.graph.add_evidence(branch, evidence)
+            for counterexample in branch.counterexamples:
+                self.graph.add_counterexample(branch, counterexample)
+            for experiment in branch.experiments:
+                self.graph.add_experiment(branch, experiment)
+            if branch.result:
+                self.graph.set_result(branch)
+            for review in branch.critic_reviews:
+                self.graph.add_review(branch, review, verifier=False)
+            for review in branch.verifier_reviews:
+                self.graph.add_review(branch, review, verifier=True)
+        for accepted in self._accepted.values():
+            self.graph.add_knowledge(accepted)
+            self.evolution.bootstrap(accepted)
 
     def _branch(self, branch_id: str) -> ResearchBranch:
         branch = self._branches.get(branch_id)
@@ -103,7 +147,6 @@ class ResearchOrchestrator:
         return branch
 
     def seed_demo(self) -> None:
-        """Seed scientific workflow examples without pretending they are verified facts."""
         with self._lock:
             if self._branches:
                 return
@@ -131,10 +174,7 @@ class ResearchOrchestrator:
                 ),
             ]
             for payload in examples:
-                branch = ResearchBranch(**payload.model_dump())
-                branch.status = BranchStatus.ACTIVE
-                self._branches[branch.id] = branch
-            self._persist()
+                self.create_branch(payload)
 
     def overview(self) -> ResearchOverview:
         branches = list(self._branches.values())
@@ -147,6 +187,23 @@ class ResearchOrchestrator:
             rejected=sum(item.status == BranchStatus.REJECTED for item in branches),
             accepted_knowledge=len(self._accepted),
             cross_pollination_events=len(self._cross_pollination),
+        )
+
+    def system_overview(self) -> ResearchSystemOverview:
+        graph = self.graph.snapshot()
+        sessions = self.council.list_sessions()
+        evolution = self.evolution.snapshot()
+        runs = self.scheduler.list_runs()
+        return ResearchSystemOverview(
+            graph_nodes=len(graph.nodes),
+            graph_edges=len(graph.edges),
+            council_sessions=len(sessions),
+            council_passed=sum(item.status.value == "passed" for item in sessions),
+            knowledge_challenged=sum(item.state.value == "challenged" for item in evolution.versions),
+            knowledge_revised=sum(item.state.value == "revised" for item in evolution.versions),
+            knowledge_revoked=sum(item.state.value == "revoked" for item in evolution.versions),
+            scheduler_runs=len(runs),
+            scheduler_actions=sum(len(item.decisions) for item in runs),
         )
 
     def list_branches(self) -> list[ResearchBranch]:
@@ -162,13 +219,26 @@ class ResearchOrchestrator:
             branch = ResearchBranch(**payload.model_dump())
             branch.status = BranchStatus.ACTIVE
             self._branches[branch.id] = branch
+            self.graph.ensure_branch(branch)
+            self._persist()
+            return branch
+
+    def archive_branch(self, branch_id: str, reason: str) -> ResearchBranch:
+        with self._lock:
+            branch = self._branch(branch_id)
+            branch.status = BranchStatus.ARCHIVED
+            branch.tags = sorted(set(branch.tags + ["killed-by-scheduler"]))
+            branch.updated_at = utc_now()
+            self._branches[branch.id] = branch
             self._persist()
             return branch
 
     def add_evidence(self, branch_id: str, payload: EvidenceCreate) -> ResearchBranch:
         with self._lock:
             branch = self._branch(branch_id)
-            branch.evidence.append(EvidenceRecord(**payload.model_dump()))
+            record = EvidenceRecord(**payload.model_dump())
+            branch.evidence.append(record)
+            self.graph.add_evidence(branch, record)
             return self._touch(branch)
 
     def add_counterexample(self, branch_id: str, payload: CounterexampleCreate) -> ResearchBranch:
@@ -176,7 +246,9 @@ class ResearchOrchestrator:
 
         with self._lock:
             branch = self._branch(branch_id)
-            branch.counterexamples.append(CounterexampleRecord(**payload.model_dump()))
+            record = CounterexampleRecord(**payload.model_dump())
+            branch.counterexamples.append(record)
+            self.graph.add_counterexample(branch, record)
             return self._touch(branch)
 
     def resolve_counterexample(self, branch_id: str, counterexample_id: str, resolution: str) -> ResearchBranch:
@@ -187,12 +259,15 @@ class ResearchOrchestrator:
                 raise KeyError(f"Unknown counterexample: {counterexample_id}")
             item.resolved = True
             item.resolution = resolution
+            self.graph.update_counterexample(item)
             return self._touch(branch)
 
     def add_experiment(self, branch_id: str, payload: ExperimentCreate) -> ResearchBranch:
         with self._lock:
             branch = self._branch(branch_id)
-            branch.experiments.append(ExperimentRecord(**payload.model_dump()))
+            record = ExperimentRecord(**payload.model_dump())
+            branch.experiments.append(record)
+            self.graph.add_experiment(branch, record)
             return self._touch(branch)
 
     def update_experiment(self, branch_id: str, experiment_id: str, payload: ExperimentUpdate) -> ResearchBranch:
@@ -206,12 +281,14 @@ class ResearchOrchestrator:
             experiment.artifacts = payload.artifacts
             experiment.reproducible = payload.reproducible
             experiment.updated_at = utc_now()
+            self.graph.update_experiment(experiment)
             return self._touch(branch)
 
     def set_result(self, branch_id: str, payload: BranchResultUpdate) -> ResearchBranch:
         with self._lock:
             branch = self._branch(branch_id)
             branch.result = payload.result.strip()
+            self.graph.set_result(branch)
             return self._touch(branch)
 
     def add_critic_review(self, branch_id: str, payload: ReviewCreate) -> ResearchBranch:
@@ -236,14 +313,13 @@ class ResearchOrchestrator:
                 branch.verifier_reviews.append(review)
             else:
                 branch.critic_reviews.append(review)
+            self.graph.add_review(branch, review, verifier=verifier)
             return self._touch(branch)
 
     def cross_pollinate(self, branch_id: str, payload: CrossPollinationRequest) -> CrossPollinationDigest:
         with self._lock:
             self._branch(branch_id)
-            targets = payload.target_branch_ids or [
-                item.id for item in self._branches.values() if item.id != branch_id
-            ]
+            targets = payload.target_branch_ids or [item.id for item in self._branches.values() if item.id != branch_id]
             for target in targets:
                 if target == branch_id:
                     raise ValueError("A branch cannot cross-pollinate into itself")
@@ -256,9 +332,7 @@ class ResearchOrchestrator:
                 unresolved_obstacle=payload.unresolved_obstacle,
                 useful_tool=payload.useful_tool,
             )
-            if not any(
-                [digest.best_lemma, digest.best_negative_result, digest.unresolved_obstacle, digest.useful_tool]
-            ):
+            if not any([digest.best_lemma, digest.best_negative_result, digest.unresolved_obstacle, digest.useful_tool]):
                 raise ValueError("Cross-pollination requires at least one research payload")
             self._cross_pollination.append(digest)
             self._persist()
@@ -270,6 +344,43 @@ class ResearchOrchestrator:
     def list_accepted_knowledge(self) -> list[AcceptedKnowledge]:
         return sorted(self._accepted.values(), key=lambda item: item.accepted_at, reverse=True)
 
+    def graph_snapshot(self, branch_id: str | None = None) -> EvidenceGraphSnapshot:
+        return self.graph.snapshot(branch_id)
+
+    def add_graph_edge(self, payload: EvidenceGraphEdgeCreate) -> EvidenceGraphEdge:
+        return self.graph.add_edge(payload)
+
+    def open_council(self, branch_id: str) -> CouncilSession:
+        branch = self._branch(branch_id)
+        return self.council.open_session(branch)
+
+    def council_contribute(self, session_id: str, payload: CouncilContributionCreate) -> CouncilSession:
+        return self.council.contribute(session_id, payload)
+
+    def council_evaluate(self, session_id: str) -> CouncilEvaluation:
+        return self.council.evaluate(session_id)
+
+    def list_council_sessions(self, branch_id: str | None = None) -> list[CouncilSession]:
+        return self.council.list_sessions(branch_id)
+
+    def scheduler_tick(self, payload: SchedulerTickRequest) -> SchedulerRun:
+        return self.scheduler.tick(self, policy=payload.policy, dry_run=payload.dry_run)
+
+    def list_scheduler_runs(self) -> list[SchedulerRun]:
+        return self.scheduler.list_runs()
+
+    def evolution_snapshot(self) -> KnowledgeEvolutionSnapshot:
+        return self.evolution.snapshot()
+
+    def challenge_knowledge(self, knowledge_id: str, payload: KnowledgeChallengeCreate) -> KnowledgeVersion:
+        if knowledge_id not in self._accepted:
+            raise KeyError(f"Unknown accepted knowledge: {knowledge_id}")
+        self.evolution.bootstrap(self._accepted[knowledge_id])
+        return self.evolution.challenge(knowledge_id, payload)
+
+    def revoke_knowledge(self, knowledge_id: str, payload: KnowledgeTransitionCreate) -> KnowledgeVersion:
+        return self.evolution.revoke(knowledge_id, payload)
+
     def gate_report(self, branch_id: str) -> ResearchGateReport:
         branch = self._branch(branch_id)
         checks: list[GateCheck] = []
@@ -280,38 +391,18 @@ class ResearchOrchestrator:
         add("hypothesis_present", bool(branch.hypothesis.strip()), "A falsifiable hypothesis must be recorded.")
         add("evidence_present", bool(branch.evidence), "At least one evidence record is required.")
         unresolved = [item.id for item in branch.counterexamples if not item.resolved]
-        add(
-            "counterexamples_resolved",
-            not unresolved,
-            "Unresolved counterexamples block acceptance." if unresolved else "No unresolved counterexample remains.",
-        )
+        add("counterexamples_resolved", not unresolved, "Unresolved counterexamples block acceptance." if unresolved else "No unresolved counterexample remains.")
         add("result_recorded", bool((branch.result or "").strip()), "A branch result must be recorded before review.")
 
         reproducible_evidence = any(item.reproducible for item in branch.evidence)
-        reproducible_experiment = any(
-            item.status == ExperimentStatus.PASSED and item.reproducible for item in branch.experiments
-        )
+        reproducible_experiment = any(item.status == ExperimentStatus.PASSED and item.reproducible for item in branch.experiments)
         proof_evidence = any(item.kind in {EvidenceKind.PROOF, EvidenceKind.DERIVATION} for item in branch.evidence)
-        add(
-            "reproducibility_or_formal_support",
-            reproducible_evidence or reproducible_experiment or proof_evidence,
-            "Require reproducible evidence/experiment or formal proof/derivation evidence.",
-        )
+        add("reproducibility_or_formal_support", reproducible_evidence or reproducible_experiment or proof_evidence, "Require reproducible evidence/experiment or formal proof/derivation evidence.")
 
         critic = branch.critic_reviews[-1] if branch.critic_reviews else None
         verifier = branch.verifier_reviews[-1] if branch.verifier_reviews else None
-        critic_pass = bool(
-            critic
-            and critic.verdict == ReviewVerdict.PASS
-            and not critic.blocking_objections
-            and critic.checked_evidence_ids
-        )
-        verifier_pass = bool(
-            verifier
-            and verifier.verdict == ReviewVerdict.PASS
-            and not verifier.blocking_objections
-            and verifier.checked_evidence_ids
-        )
+        critic_pass = bool(critic and critic.verdict == ReviewVerdict.PASS and not critic.blocking_objections and critic.checked_evidence_ids)
+        verifier_pass = bool(verifier and verifier.verdict == ReviewVerdict.PASS and not verifier.blocking_objections and verifier.checked_evidence_ids)
         add("independent_critic_pass", critic_pass, "Latest critic must pass and inspect recorded evidence.")
         add("verifier_pass", verifier_pass, "Latest verifier must pass and inspect recorded evidence.")
         independent = bool(critic and verifier and critic.reviewer.id != verifier.reviewer.id)
@@ -319,11 +410,13 @@ class ResearchOrchestrator:
 
         evidence_ids = {item.id for item in branch.evidence}
         verifier_coverage = bool(verifier and evidence_ids.issubset(set(verifier.checked_evidence_ids)))
-        add(
-            "verifier_evidence_coverage",
-            verifier_coverage,
-            "Verifier must explicitly cover every current evidence record.",
-        )
+        add("verifier_evidence_coverage", verifier_coverage, "Verifier must explicitly cover every current evidence record.")
+
+        graph_snapshot = self.graph.snapshot(branch.id)
+        graph_valid = len(graph_snapshot.topological_order) == len(graph_snapshot.nodes)
+        add("evidence_graph_acyclic", graph_valid, "Evidence provenance must remain a DAG.")
+        council_pass = self.council.branch_passed(branch.id)
+        add("adversarial_research_council", council_pass, "Five independent council roles must pass adversarial review.")
 
         blockers = [item.name for item in checks if not item.passed]
         if not branch.hypothesis.strip():
@@ -332,17 +425,11 @@ class ResearchOrchestrator:
             stage = GateStage.EVIDENCE
         elif not critic_pass:
             stage = GateStage.CRITIC
-        elif not verifier_pass or not independent or not verifier_coverage:
+        elif not verifier_pass or not independent or not verifier_coverage or not graph_valid or not council_pass:
             stage = GateStage.VERIFIER
         else:
             stage = GateStage.ACCEPTED
-        return ResearchGateReport(
-            branch_id=branch.id,
-            stage=stage,
-            accepted=not blockers,
-            checks=checks,
-            blockers=blockers,
-        )
+        return ResearchGateReport(branch_id=branch.id, stage=stage, accepted=not blockers, checks=checks, blockers=blockers)
 
     def accept(self, branch_id: str) -> AcceptedKnowledge:
         with self._lock:
@@ -367,10 +454,14 @@ class ResearchOrchestrator:
                     "hypothesis": branch.hypothesis,
                     "counterexample_ids": [item.id for item in branch.counterexamples],
                     "experiment_ids": [item.id for item in branch.experiments],
+                    "council_session_id": self.council.latest_for_branch(branch.id).id,
+                    "evidence_graph_topological_order": self.graph.snapshot(branch.id).topological_order,
                     "gate_checks": [item.model_dump(mode="json") for item in report.checks],
                 },
             )
             self._accepted[knowledge.id] = knowledge
+            self.graph.add_knowledge(knowledge)
+            self.evolution.bootstrap(knowledge)
             branch.status = BranchStatus.VERIFIED
             branch.updated_at = utc_now()
             self._branches[branch.id] = branch
