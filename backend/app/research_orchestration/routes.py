@@ -1,7 +1,22 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
+from app.research_orchestration.advanced_schemas import (
+    CouncilContributionCreate,
+    CouncilEvaluation,
+    CouncilSession,
+    EvidenceGraphEdge,
+    EvidenceGraphEdgeCreate,
+    EvidenceGraphSnapshot,
+    KnowledgeChallengeCreate,
+    KnowledgeEvolutionSnapshot,
+    KnowledgeTransitionCreate,
+    KnowledgeVersion,
+    ResearchSystemOverview,
+    SchedulerRun,
+    SchedulerTickRequest,
+)
 from app.research_orchestration.schemas import (
     AcceptedKnowledge,
     BranchResultUpdate,
@@ -39,6 +54,11 @@ def _invalid(exc: ValueError) -> HTTPException:
 @router.get("/overview", response_model=ResearchOverview)
 async def research_overview() -> ResearchOverview:
     return _research().overview()
+
+
+@router.get("/system-overview", response_model=ResearchSystemOverview)
+async def research_system_overview() -> ResearchSystemOverview:
+    return _research().system_overview()
 
 
 @router.get("/branches", response_model=list[ResearchBranch])
@@ -174,3 +194,87 @@ async def accepted_knowledge() -> list[AcceptedKnowledge]:
 @router.get("/cross-pollination", response_model=list[CrossPollinationDigest])
 async def cross_pollination_feed() -> list[CrossPollinationDigest]:
     return _research().list_cross_pollination()
+
+
+@router.get("/evidence-graph", response_model=EvidenceGraphSnapshot)
+async def evidence_graph(branch_id: str | None = Query(default=None)) -> EvidenceGraphSnapshot:
+    try:
+        return _research().graph_snapshot(branch_id)
+    except KeyError as exc:
+        raise _not_found(exc) from exc
+
+
+@router.post("/evidence-graph/edges", response_model=EvidenceGraphEdge, status_code=status.HTTP_201_CREATED)
+async def add_evidence_graph_edge(payload: EvidenceGraphEdgeCreate) -> EvidenceGraphEdge:
+    try:
+        return _research().add_graph_edge(payload)
+    except KeyError as exc:
+        raise _not_found(exc) from exc
+    except ValueError as exc:
+        raise _invalid(exc) from exc
+
+
+@router.post("/branches/{branch_id}/council", response_model=CouncilSession, status_code=status.HTTP_201_CREATED)
+async def open_council(branch_id: str) -> CouncilSession:
+    try:
+        return _research().open_council(branch_id)
+    except KeyError as exc:
+        raise _not_found(exc) from exc
+
+
+@router.get("/council", response_model=list[CouncilSession])
+async def list_council(branch_id: str | None = Query(default=None)) -> list[CouncilSession]:
+    return _research().list_council_sessions(branch_id)
+
+
+@router.post("/council/{session_id}/contributions", response_model=CouncilSession)
+async def council_contribution(session_id: str, payload: CouncilContributionCreate) -> CouncilSession:
+    try:
+        return _research().council_contribute(session_id, payload)
+    except KeyError as exc:
+        raise _not_found(exc) from exc
+    except ValueError as exc:
+        raise _invalid(exc) from exc
+
+
+@router.get("/council/{session_id}/evaluation", response_model=CouncilEvaluation)
+async def council_evaluation(session_id: str) -> CouncilEvaluation:
+    try:
+        return _research().council_evaluate(session_id)
+    except KeyError as exc:
+        raise _not_found(exc) from exc
+
+
+@router.post("/scheduler/tick", response_model=SchedulerRun)
+async def scheduler_tick(payload: SchedulerTickRequest) -> SchedulerRun:
+    return _research().scheduler_tick(payload)
+
+
+@router.get("/scheduler/runs", response_model=list[SchedulerRun])
+async def scheduler_runs() -> list[SchedulerRun]:
+    return _research().list_scheduler_runs()
+
+
+@router.get("/knowledge-evolution", response_model=KnowledgeEvolutionSnapshot)
+async def knowledge_evolution() -> KnowledgeEvolutionSnapshot:
+    return _research().evolution_snapshot()
+
+
+@router.post("/knowledge/{knowledge_id}/challenge", response_model=KnowledgeVersion)
+async def challenge_knowledge(knowledge_id: str, payload: KnowledgeChallengeCreate) -> KnowledgeVersion:
+    try:
+        return _research().challenge_knowledge(knowledge_id, payload)
+    except KeyError as exc:
+        raise _not_found(exc) from exc
+    except ValueError as exc:
+        raise _invalid(exc) from exc
+
+
+@router.post("/knowledge/{knowledge_id}/revoke", response_model=KnowledgeVersion)
+async def revoke_knowledge(knowledge_id: str, payload: KnowledgeTransitionCreate) -> KnowledgeVersion:
+    try:
+        return _research().revoke_knowledge(knowledge_id, payload)
+    except KeyError as exc:
+        raise _not_found(exc) from exc
+    except ValueError as exc:
+        raise _invalid(exc) from exc
