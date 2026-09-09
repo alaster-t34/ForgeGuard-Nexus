@@ -1,7 +1,7 @@
 [project]
 name = "forgeguard-nexus-api"
-version = "0.7.9"
-description = "Evidence-driven industrial maintenance agent platform"
+version = "0.8.0"
+description = "Verified scientific-agent platform with governed industrial evidence workflows"
 requires-python = ">=3.11,<3.13"
 dependencies = [
   "fastapi>=0.115,<1",
