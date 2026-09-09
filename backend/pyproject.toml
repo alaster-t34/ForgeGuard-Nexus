@@ -1,7 +1,7 @@
 [project]
 name = "forgeguard-nexus-api"
-version = "0.9.0"
-description = "Verified scientific-agent platform with research scheduling, evidence DAGs, adversarial councils, and evolving knowledge"
+version = "0.10.0"
+description = "Verified scientific-agent platform with controlled experiments, literature evidence DAGs, branch budgets, lineage scoring, and evolving knowledge"
 requires-python = ">=3.11,<3.13"
 dependencies = [
   "fastapi>=0.115,<1",
