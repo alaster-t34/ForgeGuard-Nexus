@@ -65,6 +65,7 @@ class ResearchOrchestrator:
         self._branches: dict[str, ResearchBranch] = {}
         self._accepted: dict[str, AcceptedKnowledge] = {}
         self._cross_pollination: list[CrossPollinationDigest] = []
+        self.autonomy = None
         base = state_path.parent
         self.graph = EvidenceGraphStore(base / "evidence-graph.json")
         self.council = AdversarialResearchCouncil(base / "research-council.json", self.graph)
@@ -72,6 +73,9 @@ class ResearchOrchestrator:
         self.scheduler = ResearchScheduler(base / "research-scheduler.json")
         self._load()
         self._reconcile_graph()
+
+    def attach_autonomy(self, controller) -> None:
+        self.autonomy = controller
 
     def _load(self) -> None:
         if not self.state_path.exists():
@@ -98,7 +102,7 @@ class ResearchOrchestrator:
     def _persist(self) -> None:
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
-            "schema_version": 2,
+            "schema_version": 3,
             "branches": [item.model_dump(mode="json") for item in self._branches.values()],
             "accepted_knowledge": [item.model_dump(mode="json") for item in self._accepted.values()],
             "cross_pollination": [item.model_dump(mode="json") for item in self._cross_pollination],
@@ -108,7 +112,6 @@ class ResearchOrchestrator:
         temp.replace(self.state_path)
 
     def _reconcile_graph(self) -> None:
-        """Backfill the DAG for existing v0.8 state without rewriting old records."""
         for branch in self._branches.values():
             self.graph.ensure_branch(branch)
             for evidence in branch.evidence:
@@ -221,6 +224,8 @@ class ResearchOrchestrator:
             self._branches[branch.id] = branch
             self.graph.ensure_branch(branch)
             self._persist()
+            if self.autonomy is not None:
+                self.autonomy.ensure_budget(branch.id)
             return branch
 
     def archive_branch(self, branch_id: str, reason: str) -> ResearchBranch:
@@ -249,7 +254,10 @@ class ResearchOrchestrator:
             record = CounterexampleRecord(**payload.model_dump())
             branch.counterexamples.append(record)
             self.graph.add_counterexample(branch, record)
-            return self._touch(branch)
+            touched = self._touch(branch)
+            if self.autonomy is not None and not payload.source.startswith("propagated:"):
+                self.autonomy.propagate_counterexample(branch.id, record.id)
+            return touched
 
     def resolve_counterexample(self, branch_id: str, counterexample_id: str, resolution: str) -> ResearchBranch:
         with self._lock:
@@ -376,7 +384,10 @@ class ResearchOrchestrator:
         if knowledge_id not in self._accepted:
             raise KeyError(f"Unknown accepted knowledge: {knowledge_id}")
         self.evolution.bootstrap(self._accepted[knowledge_id])
-        return self.evolution.challenge(knowledge_id, payload)
+        version = self.evolution.challenge(knowledge_id, payload)
+        if self.autonomy is not None and version.challenge_ids:
+            self.autonomy.propagate_knowledge_challenge(knowledge_id, version.challenge_ids[-1])
+        return version
 
     def revoke_knowledge(self, knowledge_id: str, payload: KnowledgeTransitionCreate) -> KnowledgeVersion:
         return self.evolution.revoke(knowledge_id, payload)
@@ -391,41 +402,56 @@ class ResearchOrchestrator:
         add("hypothesis_present", bool(branch.hypothesis.strip()), "A falsifiable hypothesis must be recorded.")
         add("evidence_present", bool(branch.evidence), "At least one evidence record is required.")
         unresolved = [item.id for item in branch.counterexamples if not item.resolved]
-        add("counterexamples_resolved", not unresolved, "Unresolved counterexamples block acceptance." if unresolved else "No unresolved counterexample remains.")
+        add(
+            "counterexamples_resolved",
+            not unresolved,
+            "Unresolved counterexamples block acceptance." if unresolved else "No unresolved counterexample remains.",
+        )
         add("result_recorded", bool((branch.result or "").strip()), "A branch result must be recorded before review.")
-
         reproducible_evidence = any(item.reproducible for item in branch.evidence)
-        reproducible_experiment = any(item.status == ExperimentStatus.PASSED and item.reproducible for item in branch.experiments)
+        reproducible_experiment = any(
+            item.status == ExperimentStatus.PASSED and item.reproducible for item in branch.experiments
+        )
         proof_evidence = any(item.kind in {EvidenceKind.PROOF, EvidenceKind.DERIVATION} for item in branch.evidence)
-        add("reproducibility_or_formal_support", reproducible_evidence or reproducible_experiment or proof_evidence, "Require reproducible evidence/experiment or formal proof/derivation evidence.")
-
+        add(
+            "reproducibility_or_formal_support",
+            reproducible_evidence or reproducible_experiment or proof_evidence,
+            "Require reproducible evidence/experiment or formal proof/derivation evidence.",
+        )
+        graph = self.graph.snapshot(branch_id)
+        graph_ok = len(graph.topological_order) == len(graph.nodes)
+        add("evidence_graph_acyclic", graph_ok, "Evidence Graph must remain a DAG without circular support.")
         critic = branch.critic_reviews[-1] if branch.critic_reviews else None
         verifier = branch.verifier_reviews[-1] if branch.verifier_reviews else None
-        critic_pass = bool(critic and critic.verdict == ReviewVerdict.PASS and not critic.blocking_objections and critic.checked_evidence_ids)
-        verifier_pass = bool(verifier and verifier.verdict == ReviewVerdict.PASS and not verifier.blocking_objections and verifier.checked_evidence_ids)
+        critic_pass = bool(
+            critic and critic.verdict == ReviewVerdict.PASS and not critic.blocking_objections and critic.checked_evidence_ids
+        )
+        verifier_pass = bool(
+            verifier and verifier.verdict == ReviewVerdict.PASS and not verifier.blocking_objections and verifier.checked_evidence_ids
+        )
         add("independent_critic_pass", critic_pass, "Latest critic must pass and inspect recorded evidence.")
         add("verifier_pass", verifier_pass, "Latest verifier must pass and inspect recorded evidence.")
         independent = bool(critic and verifier and critic.reviewer.id != verifier.reviewer.id)
         add("critic_verifier_independent", independent, "Critic and verifier must have distinct actor IDs.")
-
         evidence_ids = {item.id for item in branch.evidence}
         verifier_coverage = bool(verifier and evidence_ids.issubset(set(verifier.checked_evidence_ids)))
         add("verifier_evidence_coverage", verifier_coverage, "Verifier must explicitly cover every current evidence record.")
-
-        graph_snapshot = self.graph.snapshot(branch.id)
-        graph_valid = len(graph_snapshot.topological_order) == len(graph_snapshot.nodes)
-        add("evidence_graph_acyclic", graph_valid, "Evidence provenance must remain a DAG.")
-        council_pass = self.council.branch_passed(branch.id)
-        add("adversarial_research_council", council_pass, "Five independent council roles must pass adversarial review.")
-
+        sessions = self.council.list_sessions(branch_id)
+        latest_council = sessions[0] if sessions else None
+        council_pass = bool(latest_council and self.council.evaluate(latest_council.id).accepted)
+        add(
+            "adversarial_research_council",
+            council_pass,
+            "Latest five-role Adversarial Research Council must pass with independent actors and graph coverage.",
+        )
         blockers = [item.name for item in checks if not item.passed]
         if not branch.hypothesis.strip():
             stage = GateStage.HYPOTHESIS
-        elif not branch.evidence or unresolved or not (branch.result or "").strip():
+        elif not branch.evidence or unresolved or not (branch.result or "").strip() or not graph_ok:
             stage = GateStage.EVIDENCE
         elif not critic_pass:
             stage = GateStage.CRITIC
-        elif not verifier_pass or not independent or not verifier_coverage or not graph_valid or not council_pass:
+        elif not verifier_pass or not independent or not verifier_coverage or not council_pass:
             stage = GateStage.VERIFIER
         else:
             stage = GateStage.ACCEPTED
@@ -442,6 +468,7 @@ class ResearchOrchestrator:
                 return existing
             critic = branch.critic_reviews[-1]
             verifier = branch.verifier_reviews[-1]
+            council = self.council.list_sessions(branch_id)[0]
             knowledge = AcceptedKnowledge(
                 branch_id=branch.id,
                 title=branch.title,
@@ -454,8 +481,7 @@ class ResearchOrchestrator:
                     "hypothesis": branch.hypothesis,
                     "counterexample_ids": [item.id for item in branch.counterexamples],
                     "experiment_ids": [item.id for item in branch.experiments],
-                    "council_session_id": self.council.latest_for_branch(branch.id).id,
-                    "evidence_graph_topological_order": self.graph.snapshot(branch.id).topological_order,
+                    "council_session_id": council.id,
                     "gate_checks": [item.model_dump(mode="json") for item in report.checks],
                 },
             )
