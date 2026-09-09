@@ -2,9 +2,14 @@ const API = "/api/v1/research";
 
 const state = {
   overview: null,
+  advanced: null,
   branches: [],
   knowledge: [],
   pollination: [],
+  graph: null,
+  council: [],
+  evolution: null,
+  schedulerRuns: [],
 };
 
 function e(value) {
@@ -50,9 +55,22 @@ function renderOverview() {
     metric("Blocked", data.blocked ?? 0, "negative results preserved"),
     metric("Under review", data.under_review ?? 0, "critic / verifier gate"),
     metric("Verified", data.verified ?? 0, "passed full gate"),
-    metric("Accepted knowledge", data.accepted_knowledge ?? 0, "immutable provenance"),
+    metric("Accepted knowledge", data.accepted_knowledge ?? 0, "versioned provenance"),
     metric("Cross-pollination", data.cross_pollination_events ?? 0, "research transfers"),
   ].join("");
+}
+
+function renderAdvanced() {
+  const data = state.advanced ?? {};
+  document.querySelector("#advanced-overview").innerHTML = [
+    metric("DAG nodes", data.graph_nodes ?? 0, `${data.graph_edges ?? 0} explicit edges`),
+    metric("Council sessions", data.council_sessions ?? 0, `${data.council_passed ?? 0} passed`),
+    metric("Challenged", data.knowledge_challenged ?? 0, "accepted knowledge under attack"),
+    metric("Revised", data.knowledge_revised ?? 0, "historical version retained"),
+    metric("Revoked", data.knowledge_revoked ?? 0, "knowledge withdrawn"),
+    metric("Scheduler", data.scheduler_runs ?? 0, `${data.scheduler_actions ?? 0} decisions`),
+  ].join("");
+  document.querySelector("#graph-count").textContent = `${data.graph_nodes ?? 0} nodes / ${data.graph_edges ?? 0} edges`;
 }
 
 function compactList(items, empty, renderItem) {
@@ -110,6 +128,33 @@ function renderKnowledge() {
     </section>`).join("") : '<div class="empty-state small">暂无 Accepted Knowledge。Gate 没通过就不装作通过，这点已经超过不少仪表盘了。</div>';
 }
 
+function renderCouncil() {
+  const sessions = state.council ?? [];
+  const scheduler = state.schedulerRuns?.[0];
+  const councilHtml = sessions.slice(0, 5).map(item => `
+    <section class="feed-item">
+      <header><b>${e(item.branch_id)}</b><small>${e(item.status)}</small></header>
+      <p><span>Council</span>${item.contributions.length}/5 roles · ${e(item.final_reason || "review in progress")}</p>
+    </section>`).join("");
+  const schedulerHtml = scheduler ? `
+    <section class="feed-item">
+      <header><b>Latest scheduler tick</b><small>${new Date(scheduler.created_at).toLocaleString("zh-CN")}</small></header>
+      ${scheduler.decisions.map(item => `<p><span>${e(item.action)}</span>${e(item.reason)}${item.target_branch_id ? ` → ${e(item.target_branch_id)}` : ""}</p>`).join("")}
+    </section>` : "";
+  document.querySelector("#council-feed").innerHTML = councilHtml + schedulerHtml || '<div class="empty-state small">暂无 Council / Scheduler 记录。</div>';
+}
+
+function renderEvolution() {
+  const snapshot = state.evolution ?? { versions: [], challenges: [], events: [] };
+  document.querySelector("#evolution-count").textContent = `${snapshot.versions.length} versions / ${snapshot.challenges.length} challenges`;
+  document.querySelector("#evolution-feed").innerHTML = snapshot.versions.length ? snapshot.versions.slice().reverse().slice(0, 8).map(item => `
+    <section class="feed-item ${item.state === "accepted" ? "accepted-item" : ""}">
+      <header><b>${e(item.title)} · v${e(item.version)}</b><small>${e(item.state)}</small></header>
+      <p>${e(item.statement)}</p>
+      <footer>${e(item.id)}${item.successor_id ? ` → ${e(item.successor_id)}` : ""}</footer>
+    </section>`).join("") : '<div class="empty-state small">还没有知识版本链。</div>';
+}
+
 async function openGate(branchId) {
   try {
     const report = await request(`/branches/${encodeURIComponent(branchId)}/gate`);
@@ -126,22 +171,40 @@ async function openGate(branchId) {
 
 async function load() {
   try {
-    const [overview, branches, knowledge, pollination] = await Promise.all([
-      request("/overview"), request("/branches"), request("/accepted-knowledge"), request("/cross-pollination"),
+    const [overview, advanced, branches, knowledge, pollination, graph, council, evolution, schedulerRuns] = await Promise.all([
+      request("/overview"),
+      request("/system-overview"),
+      request("/branches"),
+      request("/accepted-knowledge"),
+      request("/cross-pollination"),
+      request("/evidence-graph"),
+      request("/council"),
+      request("/knowledge-evolution"),
+      request("/scheduler/runs"),
     ]);
-    state.overview = overview;
-    state.branches = branches;
-    state.knowledge = knowledge;
-    state.pollination = pollination;
+    Object.assign(state, { overview, advanced, branches, knowledge, pollination, graph, council, evolution, schedulerRuns });
     renderOverview();
+    renderAdvanced();
     renderBranches();
     renderPollination();
     renderKnowledge();
+    renderCouncil();
+    renderEvolution();
   } catch (error) {
     toast(`Research API unavailable: ${error.message}`, true);
   }
 }
 
+document.querySelector("#run-scheduler").addEventListener("click", async () => {
+  try {
+    const run = await request("/scheduler/tick", { method: "POST", body: JSON.stringify({ dry_run: false }) });
+    const actions = run.decisions.map(item => item.action).join(", ");
+    toast(`Scheduler completed: ${actions}`);
+    await load();
+  } catch (error) {
+    toast(error.message, true);
+  }
+});
 document.querySelector("#new-branch-button").addEventListener("click", () => document.querySelector("#branch-form").classList.remove("hidden"));
 document.querySelector("#cancel-branch").addEventListener("click", () => document.querySelector("#branch-form").classList.add("hidden"));
 document.querySelector("#close-gate").addEventListener("click", () => document.querySelector("#gate-dialog").close());
