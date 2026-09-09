@@ -1,28 +1,316 @@
-# ForgeGuard Nexus 5.0
+# ForgeGuard Nexus
 
-**Evidence-driven industrial maintenance agents with human-governed execution and post-maintenance verification.**
+**Verified Scientific-Agent Platform for controlled autonomous research orchestration, evidence-governed reasoning, and industrial AI verification.**
 
-ForgeGuard Nexus is an Industrial AI Agent platform for rotating machinery and critical assets. It does not stop at fault classification: it connects equipment evidence, data-quality gating, diagnosis, RUL/risk, FMEA knowledge, inventory, production context, workforce constraints, human approval, work orders, and post-maintenance verification into one auditable task loop.
-
-> GOAI Boundless Agents track: **AI + Industrial Manufacturing**  
-> Release candidate: **v0.7.9**  
+> Version: **v0.10.0**  
+> First verified domain: **industrial rotating machinery / maintenance agents**  
 > License: **Apache-2.0**
 
-## Why ForgeGuard
+ForgeGuard started as an evidence-driven Industrial 5.0 maintenance-agent system. It now treats scientific work itself as a governed runtime:
 
-A conventional predictive-maintenance model may tell an engineer that a bearing looks abnormal. A real maintenance decision still has to answer:
+- v0.8 introduced Research Branches, Cross-pollination, deterministic gates, independent criticism, verification, and Accepted Knowledge.
+- v0.9 added the Research Scheduler, persistent Evidence DAG, five-role Adversarial Research Council, and versioned Knowledge Evolution.
+- **v0.10 adds a controlled autonomous research loop:** registered automatic experiments, literature retrieval into the Evidence Graph, branch resource budgets, research-lineage scoring, and contradiction propagation.
 
-- Is the evidence trustworthy enough to act on?
-- What is the likely failure mode and remaining risk window?
-- Is the right spare part available?
-- Is a qualified technician available?
-- What production window minimizes operational impact?
-- Which action is safe enough to approve?
-- After maintenance, how do we prove the asset actually recovered?
+The industrial workflow remains intact as ForgeGuard's first scientific/engineering validation domain rather than the definition of the whole platform.
 
-ForgeGuard turns those questions into a governed Agent workflow instead of a single model output or a generic chat interface.
+## Core research lifecycle
 
-## End-to-end task loop
+```text
+Research Question
+      |
+      v
+Research Scheduler
+ generate / fork / kill
+      |
+      v
+Research Branch
+ Question / Hypothesis / Evidence / Counterexample
+ Experiment / Result / Status
+      |
+      +-------------------------+
+      |                         |
+      v                         v
+Literature Retrieval     Controlled Experiments
+      |                         |
+      +------------+------------+
+                   v
+              Evidence DAG
+                   |
+                   v
+          Branch Resource Budget
+                   |
+                   v
+          Research Lineage Score
+                   |
+                   v
+ Independent Critic + Verifier
+                   |
+                   v
+   Adversarial Research Council
+ Researcher / Devil's Advocate
+ Literature Critic / Experiment Critic
+ Formal Verifier
+                   |
+                   v
+          Accepted Knowledge v1
+                   |
+              new contradiction
+                   v
+              Challenged
+          /          |          \
+     Revised      Revoked     Superseded
+        |                         |
+        +------> Accepted v2 <----+
+```
+
+The platform does not use model confidence as a promotion criterion.
+
+## Research Scheduler
+
+The scheduler consumes recorded research state and can:
+
+- generate branches from unresolved cross-pollination obstacles;
+- fork around unresolved counterexamples;
+- fork failed or inconclusive experiments into recovery branches;
+- create revalidation branches when Accepted Knowledge is challenged;
+- archive rejected branches or branches with terminal Council failures.
+
+Every decision is persisted with its source, target, trigger, reason, and timestamp.
+
+## Evidence Graph
+
+Branch arrays remain for API compatibility, but scientific relationships are mirrored into a persistent DAG.
+
+Node types include:
+
+```text
+Claim
+Evidence
+Counterexample
+Experiment
+Result
+Review
+Council review
+Knowledge
+Challenge
+```
+
+Relations include:
+
+```text
+supports
+contradicts
+tests
+derived_from
+reviews
+verifies
+challenges
+revises
+supersedes
+forked_from
+```
+
+Any edge that would create a cycle is rejected before persistence. Circular provenance therefore cannot quietly become an argument just because enough arrows were drawn.
+
+## Adversarial Research Council
+
+A branch cannot enter Accepted Knowledge until a five-role Council passes:
+
+1. Researcher
+2. Devil's Advocate
+3. Literature Critic
+4. Experiment Critic
+5. Formal Verifier
+
+Actor IDs must be distinct. Role-specific graph coverage is enforced, and FAIL, REVISE, or blocking objections prevent promotion.
+
+## Knowledge Evolution
+
+Accepted Knowledge is explicitly revisable:
+
+```text
+Accepted v1
+    |
+    v
+Challenged
+    |
+    +--> Revised ------> Accepted v2
+    +--> Superseded ---> Accepted replacement
+    +--> Revoked
+```
+
+Historical versions are preserved. Revision or supersession can only point to replacement knowledge that has independently passed the full Research Gate and Council.
+
+## v0.10 autonomous research loop
+
+### Controlled automatic experiments
+
+ForgeGuard does **not** expose arbitrary shell or Python execution through the research API. Automatic experiments must use registered deterministic executors:
+
+- `numeric_threshold`
+- `graph_integrity`
+- `evidence_replay`
+- `branch_consistency`
+
+Every run:
+
+1. consumes the branch resource budget before execution;
+2. creates a normal ExperimentRecord;
+3. executes a registered handler;
+4. writes the result back through the research service;
+5. updates the Evidence DAG;
+6. records a stable `forgeguard://autonomy/experiments/...` artifact URI.
+
+### Literature retrieval into the Evidence Graph
+
+The autonomy layer reuses ForgeGuard's existing policy-controlled `SearchBroker` rather than inventing a parallel retrieval stack.
+
+Depending on configuration, retrieval can use:
+
+- controlled local knowledge;
+- OpenAlex;
+- Crossref;
+- optional SearXNG.
+
+External retrieval remains gated by ForgeGuard settings. Citations retain source URL, provider, publication date, query, and relation metadata.
+
+A retrieved work can be ingested as:
+
+- `context`: literature evidence;
+- `support`: literature evidence supporting the current research context;
+- `challenge`: negative evidence / counterexample.
+
+Challenge-mode literature immediately participates in contradiction propagation.
+
+### Branch resource budgets
+
+Each research branch has persistent limits for:
+
+- automatic experiment runs;
+- literature queries;
+- citations ingested;
+- compute units.
+
+Operations that would exceed a limit are rejected before the expensive action begins. The budget is a research-governance primitive, not a billing system.
+
+### Research lineage scoring
+
+Each branch receives a deterministic 0-100 process score based on recorded state:
+
+- evidence accumulation;
+- experiment accumulation;
+- negative-result resolution;
+- verified status;
+- lineage fertility / useful descendants;
+- budget efficiency.
+
+Rejected/archived branches and unresolved counterexamples receive penalties.
+
+The lineage score is a scheduling and triage signal, **not a probability that the hypothesis is scientifically true**.
+
+### Knowledge contradiction propagation
+
+A new counterexample on an ancestor branch propagates to every descendant branch as inherited negative evidence. Descendants become blocked until the inherited contradiction is addressed.
+
+When Accepted Knowledge is challenged, the same mechanism pushes a revalidation obligation into descendant branches and records affected knowledge IDs.
+
+Inherited records carry `propagated:` provenance markers so the operation is auditable and cannot recursively fan out forever.
+
+See [`docs/AUTONOMOUS_RESEARCH_LOOP.md`](docs/AUTONOMOUS_RESEARCH_LOOP.md).
+
+## Cross-pollination
+
+Research branches can propagate compact packets containing:
+
+```text
+Best lemma
+Best negative result
+Unresolved obstacle
+Useful tool
+```
+
+Negative results are retained as useful state instead of being discarded as inconvenient chat history.
+
+## Deterministic Research Gate
+
+Promotion into Accepted Knowledge requires:
+
+- a recorded falsifiable hypothesis;
+- evidence;
+- no unresolved counterexample;
+- a recorded result;
+- reproducible evidence/experiment or formal proof/derivation support;
+- a passing independent critic review;
+- a passing verifier review;
+- distinct critic and verifier actor identities;
+- verifier coverage of all current evidence;
+- an acyclic Evidence Graph;
+- a passing five-role Adversarial Research Council.
+
+Model confidence is deliberately not on the list.
+
+## Research Console
+
+Start ForgeGuard and open:
+
+```text
+http://localhost:8000/ui/research.html
+```
+
+The existing industrial operations console remains at:
+
+```text
+http://localhost:8000
+```
+
+Interactive API documentation is available at `/docs`.
+
+## Scientific API
+
+Core endpoints include:
+
+```text
+GET  /api/v1/research/overview
+GET  /api/v1/research/system-overview
+GET  /api/v1/research/branches
+POST /api/v1/research/branches
+GET  /api/v1/research/branches/{branch_id}/gate
+POST /api/v1/research/branches/{branch_id}/accept
+
+GET  /api/v1/research/evidence-graph
+POST /api/v1/research/evidence-graph/edges
+
+POST /api/v1/research/branches/{branch_id}/council
+GET  /api/v1/research/council
+POST /api/v1/research/council/{session_id}/contributions
+GET  /api/v1/research/council/{session_id}/evaluation
+
+POST /api/v1/research/scheduler/tick
+GET  /api/v1/research/scheduler/runs
+
+GET  /api/v1/research/knowledge-evolution
+POST /api/v1/research/knowledge/{knowledge_id}/challenge
+POST /api/v1/research/knowledge/{knowledge_id}/revoke
+POST /api/v1/research/knowledge/{knowledge_id}/revise/{replacement_knowledge_id}
+POST /api/v1/research/knowledge/{knowledge_id}/supersede/{replacement_knowledge_id}
+
+GET  /api/v1/research/autonomy/overview
+GET  /api/v1/research/budgets
+GET  /api/v1/research/branches/{branch_id}/budget
+POST /api/v1/research/branches/{branch_id}/budget
+POST /api/v1/research/branches/{branch_id}/auto-experiments
+GET  /api/v1/research/auto-experiments
+POST /api/v1/research/branches/{branch_id}/literature
+GET  /api/v1/research/literature-runs
+GET  /api/v1/research/lineage-scores
+POST /api/v1/research/branches/{branch_id}/counterexamples/{counterexample_id}/propagate
+GET  /api/v1/research/contradictions
+```
+
+## Industrial validation domain
+
+The original ForgeGuard industrial workflow remains intact:
 
 ```text
 Sensor / Edge / CSV input
@@ -46,25 +334,11 @@ Verification: close incident or reopen automatically
 Audit trail + reusable knowledge
 ```
 
-Safety invariants are deterministic: a plan cannot bypass required evidence, a high-risk work order cannot bypass approval, and an incident cannot be resolved without post-maintenance verification.
+The system includes 13 role-bounded industrial agents covering evidence quality, perception, industrial knowledge, diagnosis, reliability, safety, sustainability, resilience, planning, governance, work orders, verification, and coordination.
 
-## What is implemented
+## Existing verifiable engineering evidence
 
-- 13 role-bounded Agents covering data quality, perception, industrial knowledge, diagnosis, RUL/risk, human safety, energy/environment, resilience, maintenance planning, governance, work orders, verification, and coordination.
-- Real-time / near-real-time signal input, HTTP frames, serial acquisition, CSV replay, and historical CSV analysis.
-- Vibration quality checks for clipping, dropout, DC offset, effective resolution, noise inconsistency, and conflicting evidence.
-- Interpretable time/frequency/envelope features and a CPU-deployable vibration baseline.
-- Inventory, production, technician-skill, asset, FMEA, work-order, and audit tools.
-- Human-in-the-loop approval for high-risk actions.
-- Post-maintenance verification that can reject closure and reopen an incident.
-- Docker, Windows/Linux native, and Jetson deployment paths.
-- Deterministic core workflow that does not require a commercial LLM or API key.
-
-## Verifiable evidence
-
-### Model benchmark
-
-The checked-in benchmark report is generated from `artifacts/benchmarks/latest.json` on the project-generated **ForgeGuard OpenEval-RM 0.1.0** synthetic regression dataset.
+The checked-in model benchmark uses the project-generated **ForgeGuard OpenEval-RM 0.1.0** synthetic regression dataset.
 
 Selected deployment model: `dsp-calibrated-hgb-v0.2`
 
@@ -78,9 +352,7 @@ Selected deployment model: `dsp-calibrated-hgb-v0.2`
 
 The dataset is physics-informed synthetic data and is not presented as factory accuracy. See [`docs/model-benchmark-results.md`](docs/model-benchmark-results.md).
 
-### Fault-injection campaign
-
-The reproducible software/signal fault campaign reports:
+The reproducible fault-injection campaign currently reports:
 
 | Check | Result |
 |---|---:|
@@ -92,10 +364,6 @@ This is regression/safety-behavior evidence, not a plant safety case. See [`arti
 
 ## Quick start
 
-### Docker - recommended
-
-Requirements: Docker Engine/Desktop with Compose v2.
-
 ```bash
 git clone https://github.com/alaster-t34/ForgeGuard-Nexus.git
 cd ForgeGuard-Nexus
@@ -105,82 +373,46 @@ docker compose -f compose.yaml up -d --build api
 Open:
 
 ```text
-http://localhost:8000
+Industrial runtime: http://localhost:8000
+Research Nexus:     http://localhost:8000/ui/research.html
+API docs:           http://localhost:8000/docs
+Health:             http://localhost:8000/api/v1/health
 ```
 
-Health endpoint:
-
-```text
-http://localhost:8000/api/v1/health
-```
-
-Stop:
+Stop with:
 
 ```bash
 docker compose -f compose.yaml down
 ```
 
-### Linux native
-
-See [`docs/NATIVE_ENVIRONMENT_ZH.md`](docs/NATIVE_ENVIRONMENT_ZH.md) and `deploy/linux/`.
-
-### Windows native / desktop launcher
-
-Source for the Windows launcher is included in `windows-launcher/`. Prebuilt EXE files are intentionally kept out of Git history and should be published as GitHub Release assets. See [`docs/WINDOWS_EXE_ZH.md`](docs/WINDOWS_EXE_ZH.md).
-
-### Jetson
-
-See [`docs/jetson-deployment.md`](docs/jetson-deployment.md) and `deploy/jetson-5/`.
-
-## GOAI competition package
-
-Competition-specific material is consolidated under [`docs/goai/`](docs/goai/):
-
-- [`GOAI_SUBMISSION_ZH.md`](docs/goai/GOAI_SUBMISSION_ZH.md) - judge-facing project narrative and requirement mapping.
-- [`DEMO_SCRIPT_2MIN_ZH.md`](docs/goai/DEMO_SCRIPT_2MIN_ZH.md) - 2-minute hero demo storyboard.
-- [`SUBMISSION_CHECKLIST_ZH.md`](docs/goai/SUBMISSION_CHECKLIST_ZH.md) - final submission checklist.
-- [`GITHUB_PUBLISH_ZH.md`](docs/goai/GITHUB_PUBLISH_ZH.md) - clean repository publishing steps.
-- [`RELEASE_ASSETS_ZH.md`](docs/goai/RELEASE_ASSETS_ZH.md) - files intentionally excluded from Git history and where to publish them.
-- [`submission/project-intro-500zh.txt`](docs/goai/submission/project-intro-500zh.txt) - compressed project description for the preliminary submission form.
-- Existing preliminary PPT/PDF are preserved in [`docs/goai/submission/`](docs/goai/submission/).
-
 ## Repository layout
 
 ```text
-backend/                 FastAPI backend, Agent workflow, tools, benchmark code
-edge-node/               hardware-neutral edge acquisition/replay client
-frontend/                dependency-light web console
-backend/knowledge/       controlled FMEA and safety knowledge
-backend/research/        model registry and selected model artifacts
-data/openeval/           open synthetic regression dataset + provenance
-artifacts/benchmarks/    benchmark reports
-artifacts/fault-campaigns/ fault-injection results
-artifacts/design/        design assets
-deploy/                  Windows/Linux/Jetson deployment scripts
-scripts/                 benchmark, verification and packaging utilities
-docs/                    architecture, QA, compliance and deployment docs
-docs/goai/               competition-facing package
-simulator/               deterministic demo/replay inputs
-windows-launcher/        Windows launcher source
+backend/app/research_orchestration/  branches, scheduler, DAG, council, evolution, autonomy
+backend/app/                         FastAPI, industrial agents, tools and runtime
+frontend/research.html               scientific orchestration console
+frontend/                            existing industrial operations console
+backend/research/                    model registry and selected artifacts
+backend/knowledge/                   controlled FMEA and safety knowledge
+data/openeval/                       synthetic regression dataset + provenance
+artifacts/                           benchmark, fault-campaign and design evidence
+docs/                                architecture, research, QA and deployment docs
+edge-node/                           acquisition/replay client
+deploy/                              Windows/Linux/Jetson deployment scripts
 ```
 
-## Data and model boundary
+Research state is persisted atomically under `runtime-data/`:
 
-- OpenEval-RM is project-generated synthetic data for reproducible regression and robustness testing.
-- CWRU, Paderborn, XJTU-SY and other external datasets are not redistributed; users must obtain them from their official sources under the corresponding terms.
-- Raw plant/rig evidence is excluded from Git by default.
-- Production inference uses the portable NPZ artifact; model provenance and benchmark scope are documented.
-- Synthetic/public/physical-rig evidence must remain clearly separated in any publication or competition claim.
+```text
+research-state.json
+evidence-graph.json
+research-council.json
+research-scheduler.json
+knowledge-evolution.json
+research-autonomy.json
+```
 
-See [`NOTICE.md`](NOTICE.md), [`docs/data-compliance.md`](docs/data-compliance.md), and [`docs/external-dataset-licenses.md`](docs/external-dataset-licenses.md).
-
-## Safety boundary
-
-ForgeGuard is a decision-support system. It does **not** directly authorize or control real production equipment. High-risk actions require an authorized human approver and enterprise safety procedures. Low-quality or contradictory evidence triggers reacquisition/escalation rather than a forced deterministic maintenance conclusion.
-
-See [`SECURITY.md`](SECURITY.md) and [`docs/competition-compliance.md`](docs/competition-compliance.md).
-
-## Tests and verification
+## Verification
 
 Useful entry points:
 
@@ -188,13 +420,28 @@ Useful entry points:
 python scripts/verify_v079.py
 python scripts/run_benchmarks.py --without-cnn
 python scripts/run_fault_campaign.py
+cd backend && pytest -q
 ```
 
-Backend tests live in `backend/tests/`; edge tests live in `edge-node/tests/`. GitHub Actions are configured in `.github/workflows/ci.yml`.
+Research regression tests cover gate invariants, Evidence Graph cycle rejection, Council independence, Knowledge Evolution, Scheduler behavior, budget exhaustion, controlled automatic experiments, literature ingestion, lineage scoring, and contradiction propagation.
 
-## Full product documentation
+CI runs the backend test matrix on Linux and Windows with Python 3.11/3.12 and syntax-checks both frontend consoles.
 
-The original long-form Chinese README is preserved at [`docs/README_FULL_ZH.md`](docs/README_FULL_ZH.md).
+## Data, knowledge, autonomy, and safety boundaries
+
+- OpenEval-RM is synthetic regression evidence, not factory accuracy.
+- External datasets such as CWRU, Paderborn, and XJTU-SY are not redistributed.
+- Raw plant/rig evidence is excluded from Git by default.
+- High-risk industrial actions still require an authorized human approver.
+- Maintenance incidents still require post-maintenance verification before closure.
+- A research branch is not Accepted Knowledge merely because an LLM produced it.
+- Accepted Knowledge can later be challenged, revised, superseded, or revoked.
+- Automatic research experiments are registered deterministic executors, not arbitrary remote code execution.
+- Literature retrieval is policy-controlled and external network use is configuration-gated.
+- A lineage score describes recorded research process quality; it is not scientific truth probability.
+- "Verified Scientific-Agent Platform" describes explicit verification machinery. It does not mean every generated claim is true, nor does it replace peer review, replication, certification, or physical safety validation.
+
+See [`NOTICE.md`](NOTICE.md), [`SECURITY.md`](SECURITY.md), [`docs/data-compliance.md`](docs/data-compliance.md), [`docs/RESEARCH_ORCHESTRATION.md`](docs/RESEARCH_ORCHESTRATION.md), [`docs/ADVANCED_RESEARCH_LAYERS.md`](docs/ADVANCED_RESEARCH_LAYERS.md), and [`docs/AUTONOMOUS_RESEARCH_LOOP.md`](docs/AUTONOMOUS_RESEARCH_LOOP.md).
 
 ## License
 

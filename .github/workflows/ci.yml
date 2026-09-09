@@ -32,4 +32,5 @@ jobs:
         with:
           node-version: "22"
       - run: node --check frontend/app.js
+      - run: node --check frontend/research.js
       - run: bash -n start.sh stop.sh deploy/linux/*.sh deploy/jetson-5/*.sh
