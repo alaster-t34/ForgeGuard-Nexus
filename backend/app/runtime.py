@@ -12,6 +12,7 @@ from app.models.deterministic import DeterministicFusionAdapter
 from app.models.registry import ModelRegistry
 from app.models.vibration_selected import SelectedVibrationAdapter
 from app.research_orchestration import ResearchOrchestrator
+from app.research_orchestration.autonomy import ResearchAutonomyController
 from app.services.analytics import AnalyticsService
 from app.services.knowledge import LocalKnowledgeBase
 from app.services.reasoning import ReasoningGateway
@@ -36,6 +37,7 @@ class Runtime:
     bench: BenchGateway
     analysis: IndustrialDataAnalysisService
     research: ResearchOrchestrator
+    research_autonomy: ResearchAutonomyController
 
 
 settings = get_settings()
@@ -60,6 +62,12 @@ bench = BenchGateway(models, project_root / "artifacts" / "bench-evidence")
 analytics = AnalyticsService(store, bench)
 reasoning = ReasoningGateway(settings, store)
 research = ResearchOrchestrator(project_root / "runtime-data" / "research-state.json")
+research_autonomy = ResearchAutonomyController(
+    project_root / "runtime-data" / "research-autonomy.json",
+    research,
+    search,
+)
+research.attach_autonomy(research_autonomy)
 research.seed_demo()
 
 
@@ -131,7 +139,7 @@ async def query_workforce(skills: list[str]):
             }
             for item in qualified
         ],
-        "source": "ForgeGuard workforce service",
+        "source": "ForgeGuard workforce context service",
     }
 
 
@@ -173,4 +181,5 @@ runtime = Runtime(
     bench=bench,
     analysis=analysis,
     research=research,
+    research_autonomy=research_autonomy,
 )
